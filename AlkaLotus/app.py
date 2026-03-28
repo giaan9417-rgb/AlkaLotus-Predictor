@@ -114,24 +114,79 @@ elif page == "2. Virtual Docking Lab":
 # --- MODULE 3: ANALYTICS DASHBOARD ---
 elif page == "3. Analytics Dashboard":
     st.title("📊 Analytics Dashboard")
-    st.markdown(f"Kết quả mô phỏng cho **{st.session_state.selected_compound}**")
+    st.markdown(f"Phân tích chuyên sâu cho **{st.session_state.selected_compound}**")
     
     col1, col2 = st.columns(2)
+    
     with col1:
         st.subheader("Năng lượng liên kết (ΔG)")
+        
+        # BACE1 Comparison
         bace_dg = selected_data['dG_BACE1']
-        st.metric("BACE1 Affinity", f"{bace_dg} kcal/mol", delta_color="inverse")
+        st.metric("BACE1 Affinity", f"{bace_dg} kcal/mol", 
+                  delta=f"{round(bace_dg - (-8.5), 2)} vs Verubecestat", delta_color="inverse")
         st.caption(f"Đánh giá: {classify_potential(bace_dg)}")
         
+        # AChE Comparison
         ache_dg = selected_data['dG_AChE']
-        st.metric("AChE Affinity", f"{ache_dg} kcal/mol", delta_color="inverse")
+        st.metric("AChE Affinity", f"{ache_dg} kcal/mol", 
+                  delta=f"{round(ache_dg - (-7.9), 2)} vs Donepezil", delta_color="inverse")
         st.caption(f"Đánh giá: {classify_potential(ache_dg)}")
+        
+        st.markdown("---")
+        st.subheader("Cảnh báo Dược lý")
+        if selected_data['BBB_Permeability']:
+            st.success("✅ Khả năng qua hàng rào máu não (BBB): TỐT")
+        else:
+            st.error("⚠️ Khả năng qua hàng rào máu não (BBB): KÉM (Cần hệ vận chuyển Nano)")
             
     with col2:
-        st.subheader("Hồ sơ ADMET")
+        st.subheader("Hồ sơ ADMET (Mô phỏng)")
         fig = create_admet_radar(selected_data)
         st.plotly_chart(fig, use_container_width=True)
         
-    if st.button("📄 Xuất báo cáo nghiên cứu"):
-        report = f"Hợp chất: {selected_data['Name']}\nMW: {selected_data['MW']}\ndG BACE1: {bace_dg}"
-        st.download_button("Tải File TXT", report, file_name=f"ALKMER_{selected_data['Name']}.txt")
+    # --- PHẦN XUẤT BÁO CÁO CHI TIẾT ---
+    st.markdown("---")
+    st.subheader("📄 Kết xuất dữ liệu nghiên cứu")
+    
+    if st.button("Tạo báo cáo chi tiết (.txt)"):
+        # Nội dung báo cáo đầy đủ thông tin
+        report_content = f"""
+        ==================================================
+        BÁO CÁO KẾT QUẢ NGHIÊN CỨU IN SILICO - ALKMER
+        Dự án: Alkaloid Lá Sen trong điều trị Alzheimer
+        ==================================================
+        
+        [ THÔNG TIN TÁC GIẢ ]
+        - Họ và tên: Quách Gia An
+        - Đơn vị: Lớp 10Sử - THPT Chuyên Hùng Vương
+        - Ngày xuất báo cáo: 2026-03
+        
+        [ 1. THÔNG TIN HỢP CHẤT ]
+        - Tên Alkaloid: {selected_data['Name']}
+        - Công thức hóa học: {selected_data['Formula']}
+        - Khối lượng phân tử (MW): {selected_data['MW']} g/mol
+        - Hệ số phân bố (LogP): {selected_data['LogP']}
+        - Liên kết Hydro (HBD/HBA): {selected_data['HBD']} / {selected_data['HBA']}
+        
+        [ 2. TIỀM NĂNG ỨC CHẾ ENZYME (DOCKING) ]
+        - Mục tiêu BACE1 (4XXS): {selected_data['dG_BACE1']} kcal/mol
+          => Đánh giá: {classify_potential(selected_data['dG_BACE1'])}
+        - Mục tiêu AChE (7D9O): {selected_data['dG_AChE']} kcal/mol
+          => Đánh giá: {classify_potential(selected_data['dG_AChE'])}
+        
+        [ 3. DƯỢC ĐỘNG HỌC & ĐỘC TÍNH ]
+        - Khả năng xuyên rào máu não (BBB): {'Tốt (Có thể tác động trực tiếp)' if selected_data['BBB_Permeability'] else 'Kém (Cần công nghệ vận chuyển Nano)'}
+        - Tuân thủ quy tắc Lipinski: {'Có (Đạt tiêu chuẩn giống thuốc)' if check_lipinski(selected_data) else 'Không (Cần tối ưu cấu trúc)'}
+        
+        --------------------------------------------------
+        Dữ liệu được mô phỏng qua hệ thống AlkaLotus Predictor.
+        Bản quyền thuộc về nhóm nghiên cứu Gia An - Bách Hợp.
+        ==================================================
+        """
+        st.download_button(
+            label="Nhấn vào đây để tải báo cáo về máy",
+            data=report_content,
+            file_name=f"Bao_cao_ALKMER_{selected_data['Name']}.txt",
+            mime="text/plain"
+        )
