@@ -1,0 +1,10 @@
+streamlit
+pandas
+plotly
+py3Dmol
+stmol
+requests
+ipython_genutils
+ipywidgets
+matplotlib
+numpy
