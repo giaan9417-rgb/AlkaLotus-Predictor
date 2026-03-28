@@ -47,7 +47,7 @@ df = get_database()
 
 # --- SIDEBAR ---
 st.sidebar.title("🪷 AlkaLotus Predictor")
-st.sidebar.markdown("# app.py
+st.sidebar.markdown("# app.py")
 import streamlit as st
 from stmol import showmol
 from data import get_database
