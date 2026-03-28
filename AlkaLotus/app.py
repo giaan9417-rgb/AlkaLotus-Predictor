@@ -11,28 +11,34 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Thêm đoạn này để giao diện luôn sáng sủa, chuyên nghiệp
+# --- XÓA CẢ 2 ĐOẠN CSS CŨ VÀ DÁN ĐOẠN NÀY VÀO ---
 st.markdown("""
     <style>
+    /* 1. Ép nền toàn bộ web thành màu trắng */
     .stApp {
-        background-color: #FFFFFF;
+        background-color: #FFFFFF !important;
     }
-    /* Chỉnh màu chữ cho dễ đọc trên nền trắng */
-    h1, h2, h3, p, span {
+    
+    /* 2. Ép chữ tiêu đề và chữ nội dung thành màu đen đậm để nổi bật */
+    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown {
         color: #262730 !important;
+    }
+
+    /* 3. Chỉnh cái Card thông tin cho sáng sủa hơn */
+    .card {
+        background-color: #F8F9FA; 
+        padding: 20px; 
+        border-radius: 10px; 
+        margin-bottom: 20px;
+        border: 1px solid #E0E0E0;
+    }
+
+    /* 4. Chỉnh màu cho các con số Metric (MW, LogP) */
+    [data-testid="stMetricValue"] {
+        color: #FF69B4 !important; /* Màu hồng sen cho các con số */
     }
     </style>
     """, unsafe_allow_html=True)
-
-# Custom CSS cho UI hiện đại
-st.markdown("""
-    <style>
-    .stApp { background-color: #0E1117; }
-    .card { background-color: #262730; padding: 20px; border-radius: 10px; margin-bottom: 20px;}
-    .metric-value { font-size: 24px; font-weight: bold; color: #00FF9D; }
-    </style>
-""", unsafe_allow_html=True)
-
 # Khởi tạo Session State
 if 'selected_compound' not in st.session_state:
     st.session_state.selected_compound = "Roemerine"
