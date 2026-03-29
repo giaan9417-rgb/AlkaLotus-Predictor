@@ -140,7 +140,7 @@ elif page == "3. Phân tích & Xuất báo cáo":
 ======================================================================
 Dự án: Nghiên cứu In Silico dẫn xuất Alkaloid từ lá sen điều trị Alzheimer
 Tác giả: Quách Gia An - Nguyễn Lê Bách Hợp
-Đơn vị: Lớp 10Sử - Trường THPT Chuyên Hùng Vương
+Đơn vị: Lớp 10-K30 - Trường THPT Chuyên Hùng Vương
 Thời gian trích xuất: {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M:%S')}
 
 ----------------------------------------------------------------------
