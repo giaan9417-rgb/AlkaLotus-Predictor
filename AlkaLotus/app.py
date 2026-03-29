@@ -107,29 +107,47 @@ elif page == "2. Mô phỏng Docking 3D":
             else:
                 st.error("Không thể kết nối Server PDB.")
 
-# --- MODULE 3: ANALYTICS & REPORT (PHIÊN BẢN NGHIÊN CỨU KHOA HỌC) ---
+# --- MODULE 3: ANALYTICS & REPORT (SỬA LỖI GIAO DIỆN) ---
 elif page == "3. Phân tích & Xuất báo cáo":
     st.title("📊 Kết quả phân tích dược tính")
     
-    c1, c2 = st.columns(2)
-    with c1:
+    # Tạo 2 cột cân bằng
+    col_left, col_right = st.columns([1, 1]) 
+    
+    with col_left:
         st.markdown('<div class="card">', unsafe_allow_html=True)
-        st.subheader("Năng lượng liên kết (Affinity)")
+        st.subheader("🎯 Năng lượng liên kết (Affinity)")
+        
+        # BACE1
         st.metric("BACE1 ΔG", f"{selected_data['dG_BACE1']} kcal/mol", delta="-8.5 (Veru)", delta_color="inverse")
-        st.caption(f"Đánh giá tiềm năng: {classify_potential(selected_data['dG_BACE1'])}")
+        st.caption(f"Đánh giá: {classify_potential(selected_data['dG_BACE1'])}")
+        
+        st.write("---") # Đường kẻ phân cách nhỏ
+        
+        # AChE
         st.metric("AChE ΔG", f"{selected_data['dG_AChE']} kcal/mol", delta="-7.9 (Done)", delta_color="inverse")
-        st.caption(f"Đánh giá tiềm năng: {classify_potential(selected_data['dG_AChE'])}")
+        st.caption(f"Đánh giá: {classify_potential(selected_data['dG_AChE'])}")
         st.markdown('</div>', unsafe_allow_html=True)
         
+        # Cảnh báo BBB nằm ngay dưới bảng chỉ số
         if selected_data['BBB_Permeability']:
             st.success("✅ Dự đoán: Có khả năng xuyên rào máu não (BBB)")
         else:
-            st.error("⚠️ Dự đoán: Khả năng xuyên rào máu não thấp")
-            
-    with c2:
-        st.subheader("Hồ sơ ADMET Radar")
+            st.warning("⚠️ Dự đoán: Khả năng xuyên rào máu não thấp")
+
+    with col_right:
+        st.markdown('<div class="card" style="height: 100%;">', unsafe_allow_html=True)
+        st.subheader("🕸️ Hồ sơ ADMET Radar") # Đưa tiêu đề vào trong Card
+        
+        # Vẽ biểu đồ Radar
         fig = create_admet_radar(selected_data)
+        # Chỉnh lề biểu đồ để không chiếm quá nhiều không gian gây lệch
+        fig.update_layout(margin=dict(l=20, r=20, t=20, b=20)) 
         st.plotly_chart(fig, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown("---")
+    # Nút xuất báo cáo giữ nguyên...
     
     st.markdown("---")
     
