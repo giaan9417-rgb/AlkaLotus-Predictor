@@ -48,23 +48,19 @@ if 'selected_compound' not in st.session_state:
 df = get_database()
 selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
 
-# --- 4. SIDEBAR - CĂN GIỮA TUYỆT ĐỐI ---
+# --- 4. SIDEBAR
 import os
 
 logo_filename = "Logo_HungVuong.png"
 
-# Tạo một khối container để căn giữa mọi thứ bên trong
 st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 
 if os.path.exists(logo_filename):
-    # Hiển thị logo (giảm width xuống một chút để thanh thoát hơn)
     st.sidebar.image(logo_filename, width=130)
 else:
-    # Link dự phòng nếu file local gặp sự cố
     fallback_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png"
     st.sidebar.image(fallback_url, width=130)
 
-# Dòng chữ tên trường nằm ngay dưới logo và cũng được căn giữa
 st.sidebar.markdown(
     """
     <p style='font-size: 1em; font-weight: bold; color: #2E2E2E; margin-top: 5px; margin-bottom: 0px;'>
@@ -79,7 +75,6 @@ st.sidebar.markdown("</div>", unsafe_allow_html=True)
 st.sidebar.divider()
 st.sidebar.divider()
 
-# Tên dự án đầy đủ như Gia An mong muốn
 st.sidebar.title("🪷 ALKALOTUS PREDICTOR")
 st.sidebar.markdown(
     """
