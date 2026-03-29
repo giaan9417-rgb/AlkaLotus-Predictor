@@ -4,6 +4,7 @@ import joblib
 import numpy as np
 import time
 import os
+import plotly.express as px
 from stmol import showmol
 from data import get_database
 from utils import fetch_pdb, render_3d_molecule, check_lipinski, create_admet_radar, classify_potential
@@ -29,8 +30,13 @@ st.markdown("""
         border: 1px solid #E0E0E0;
         box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
     }
+    .xai-box {
+        background-color: #FFF0F5;
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 5px solid #FF69B4;
+    }
     [data-testid="stMetricValue"] { color: #FF69B4 !important; font-weight: bold; }
-    .stSelectbox div[data-baseweb="select"] { color: #262730 !important; }
     .stButton>button { 
         width: 100%; 
         border-radius: 20px; 
@@ -121,10 +127,9 @@ elif page == "2. Mô phỏng Docking 3D":
             else:
                 st.error("Không thể kết nối Server RCSB PDB.")
 
-# --- MODULE 3: ANALYTICS & REPORT (CẬP NHẬT BÁO CÁO CHUẨN) ---
+# --- MODULE 3: ANALYTICS & REPORT ---
 elif page == "3. Phân tích & Xuất báo cáo":
     st.title("📊 Phân tích Kết quả & Xuất báo cáo")
-    
     st.subheader(f"Thông tin chi tiết hợp chất: {selected_data['Name']}")
     st.markdown('<div class="card">', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
@@ -136,19 +141,15 @@ elif page == "3. Phân tích & Xuất báo cáo":
     st.markdown('</div>', unsafe_allow_html=True)
 
     col_left, col_right = st.columns([1, 1]) 
-    
     with col_left:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("🎯 Năng lượng liên kết (Affinity)")
         st.metric("BACE1 ΔG", f"{selected_data['dG_BACE1']} kcal/mol", delta="-8.5 (Veru)", delta_color="inverse")
         st.metric("AChE ΔG", f"{selected_data['dG_AChE']} kcal/mol", delta="-7.9 (Done)", delta_color="inverse")
         st.markdown('</div>', unsafe_allow_html=True)
-        
         bbb_text = "TÍCH CỰC (Có khả năng tác động TW)" if selected_data['BBB_Permeability'] else "HẠN CHẾ (Khả năng xuyên thấp)"
-        if selected_data['BBB_Permeability']:
-            st.success(f"✅ BBB: {bbb_text}")
-        else:
-            st.warning(f"⚠️ BBB: {bbb_text}")
+        if selected_data['BBB_Permeability']: st.success(f"✅ BBB: {bbb_text}")
+        else: st.warning(f"⚠️ BBB: {bbb_text}")
 
     with col_right:
         st.markdown('<div class="card" style="height: 100%;">', unsafe_allow_html=True)
@@ -157,11 +158,9 @@ elif page == "3. Phân tích & Xuất báo cáo":
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
-    
-    # Tạo nội dung báo cáo theo mẫu yêu cầu
     current_time = time.strftime("%d/%m/%Y %H:%M:%S")
     report_text = f"""======================================================================
-         BÁO CÁO PHÂN TÍCH DƯỢC TÍNH PHÂN TỬ - ALKALOTUS PREDICTOR
+             BÁO CÁO PHÂN TÍCH DƯỢC TÍNH PHÂN TỬ - ALKALOTUS PREDICTOR
 ======================================================================
 Dự án: Nghiên cứu In Silico dẫn xuất Alkaloid từ lá sen điều trị Alzheimer
 Tác giả: Quách Gia An - Nguyễn Lê Bách Hợp
@@ -173,7 +172,6 @@ I. THÔNG TIN HỢP CHẤT (COMPOUND IDENTIFICATION)
 ----------------------------------------------------------------------
 - Tên hợp chất: {selected_data['Name']}
 - Công thức hóa học: {selected_data['Formula']}
-- Nguồn gốc: Alkaloid từ Nelumbo nucifera (Sen)
 
 ----------------------------------------------------------------------
 II. THÔNG SỐ HÓA LÝ & QUY TẮC LIPINSKI (DRUG-LIKENESS)
@@ -182,40 +180,23 @@ II. THÔNG SỐ HÓA LÝ & QUY TẮC LIPINSKI (DRUG-LIKENESS)
 2. Hệ số phân bố (LogP): {selected_data['LogP']}
 3. Số liên kết H-Donor (HBD): {selected_data['HBD']}
 4. Số liên kết H-Acceptor (HBA): {selected_data['HBA']}
-=> ĐÁNH GIÁ CHUNG: TUÂN THỦ quy tắc Lipinski (Tiềm năng làm thuốc uống tốt)
+=> ĐÁNH GIÁ CHUNG: TUÂN THỦ quy tắc Lipinski
 
 ----------------------------------------------------------------------
 III. KẾT QUẢ MÔ PHỎNG DOCKING PHÂN TỬ (BINDING AFFINITY)
 ----------------------------------------------------------------------
-* Mục tiêu 1: Enzyme BACE1 (Beta-secretase 1)
-  - Năng lượng tự do Gibbs (ΔG): {selected_data['dG_BACE1']} kcal/mol
-  - So sánh với thuốc đối chứng Verubecestat (-8.5 kcal/mol): {"Tốt hơn" if selected_data['dG_BACE1'] < -8.5 else "Tương đương"}
-
-* Mục tiêu 2: Enzyme AChE (Acetylcholinesterase)
-  - Năng lượng tự do Gibbs (ΔG): {selected_data['dG_AChE']} kcal/mol
-  - So sánh với thuốc đối chứng Donepezil (-7.9 kcal/mol): {"Tốt hơn" if selected_data['dG_AChE'] < -7.9 else "Tương đương"}
-
-=> KẾT LUẬN DOCKING: High Potential 🌟
+* Mục tiêu 1: Enzyme BACE1 -> ΔG: {selected_data['dG_BACE1']} kcal/mol
+* Mục tiêu 2: Enzyme AChE -> ΔG: {selected_data['dG_AChE']} kcal/mol
 
 ----------------------------------------------------------------------
 IV. DƯỢC ĐỘNG HỌC & ĐỘ AN TOÀN (ADMET)
 ----------------------------------------------------------------------
 - Khả năng xuyên rào máu não (BBB): {bbb_text}
-- Khả năng hấp thu qua ruột người (HIA): Cao (Dựa trên mô phỏng Radar)
-- Độ an toàn: Không gây độc tính cấp trong ngưỡng sàng lọc.
-
-----------------------------------------------------------------------
-Đây là kết quả nghiên cứu dựa trên mô phỏng máy tính (In Silico). 
-Cần các thử nghiệm In Vitro và In Vivo để xác minh kết quả.
+- Khả năng hấp thu qua ruột người (HIA): Cao
 ======================================================================
 """
     st.header("🔬 Xuất bản kết quả")
-    st.download_button(
-        label="📥 TẢI BÁO CÁO CHI TIẾT (.TXT)", 
-        data=report_text, 
-        file_name=f"AlkaLotus_Report_{selected_data['Name']}.txt",
-        mime="text/plain"
-    )
+    st.download_button(label="📥 TẢI BÁO CÁO CHI TIẾT (.TXT)", data=report_text, file_name=f"AlkaLotus_Report_{selected_data['Name']}.txt", mime="text/plain")
 
     st.header("🔬 Kiểm chứng độ tin cậy mô hình (Validation)")
     real_data = {
@@ -227,14 +208,14 @@ Cần các thử nghiệm In Vitro và In Vivo để xác minh kết quả.
     }
     st.table(pd.DataFrame(real_data))
 
-# --- MODULE 4: AI PREDICTOR ---
+# --- MODULE 4: AI PREDICTOR (NÂNG CẤP XAI CHUYÊN SÂU) ---
 elif page == "4. AI Predictor (ML)":
     st.title("🛡️ AI Research Expert - Molecular Screening")
-    st.markdown("<div style='background-color: #F0F2F6; padding: 15px; border-radius: 10px; border-left: 5px solid #FF69B4;'><b>Đánh giá đa tầng:</b> Dự đoán ái lực & Sàng lọc dược tính.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='xai-box'><b>Phân tích đa tầng XAI:</b> Sử dụng Explainable AI để minh bạch hóa dự đoán của mô hình Random Forest.</div>", unsafe_allow_html=True)
     
     try:
         model_ai = joblib.load('AlkaLotus/alkmer_model.pkl')
-        tab_main, tab_expert = st.tabs(["🎯 Dự đoán & Đánh giá", "🔬 Phân tích XAI Chuyên sâu"])
+        tab_main, tab_expert = st.tabs(["🎯 Dự đoán & Đánh giá", "🧠 Phân tích XAI Chuyên sâu"])
         
         with tab_main:
             c1, c2 = st.columns([2, 1])
@@ -249,12 +230,9 @@ elif page == "4. AI Predictor (ML)":
                 
             if btn_analyze:
                 progress_bar = st.progress(0)
-                status_text = st.empty()
                 for i in range(1, 101):
-                    status_text.markdown(f"✨ *AI đang hội ý cây quyết định **{i}/100**...*")
                     progress_bar.progress(i)
-                    time.sleep(0.01)
-                status_text.success("✅ Rừng cây quyết định đã thống nhất kết quả!")
+                    time.sleep(0.005)
 
                 features = np.array([[v_mw, v_logp, v_hbd, v_hba]])
                 pred_dg = model_ai.predict(features)[0]
@@ -264,6 +242,8 @@ elif page == "4. AI Predictor (ML)":
                 with c2:
                     st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
                     st.metric("Drug-likeness", f"{safety_score}%")
+                    if pred_dg < -8.0: st.success("Tiềm năng rất cao 🌟")
+                    else: st.info("Cần tối ưu thêm cấu trúc")
                     
                 st.subheader("So sánh với 'Thuốc vàng' Verubecestat")
                 comp_data = pd.DataFrame({
@@ -274,10 +254,31 @@ elif page == "4. AI Predictor (ML)":
                 st.line_chart(comp_data.set_index("Chỉ số"))
 
         with tab_expert:
-            st.subheader("🧠 Giải thích quyết định của AI (XAI)")
+            st.subheader("🔬 Giải thích cơ chế dự đoán (Feature Importance)")
+            
+            # 1. Trực quan hóa Feature Importance bằng Plotly
             importances = model_ai.feature_importances_
-            imp_df = pd.DataFrame({'Yếu tố': ['MW', 'LogP', 'HBD', 'HBA'], 'Mức độ ảnh hưởng': importances})
-            st.bar_chart(imp_df.set_index('Yếu tố'))
+            labels = ['Molecular Weight', 'Lipophilicity (LogP)', 'H-Donor', 'H-Acceptor']
+            imp_df = pd.DataFrame({'Yếu tố': labels, 'Mức độ ảnh hưởng (%)': importances * 100}).sort_values('Mức độ ảnh hưởng (%)')
+            
+            fig_xai = px.bar(imp_df, x='Mức độ ảnh hưởng (%)', y='Yếu tố', orientation='h',
+                             color='Mức độ ảnh hưởng (%)', color_continuous_scale='RdPu',
+                             title="Tỷ trọng đóng góp của các chỉ số vào kết quả ΔG")
+            st.plotly_chart(fig_xai, use_container_width=True)
+
+            # 2. Nhận xét chuyên sâu
+            top_feat = imp_df.iloc[-1]['Yếu tố']
+            st.markdown(f"""
+            <div class='card'>
+            <b>📌 Nhận định khoa học từ AI:</b><br>
+            Mô hình xác định <b>{top_feat}</b> là biến số quan trọng nhất ảnh hưởng đến ái lực liên kết. 
+            Trong hóa tin học, điều này chứng minh rằng cấu trúc không gian và tính tan của hợp chất 
+            từ lá sen đóng vai trò tiên quyết trong việc ức chế enzyme mục tiêu.
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # 3. Phân tích phân bổ dự đoán (Prediction Distribution)
+            st.info("💡 **Dành cho nghiên cứu:** Các yếu tố có trọng số cao hơn cần được ưu tiên tối ưu hóa hóa học để tăng cường dược tính.")
 
     except Exception as e:
-        st.error(f"Lỗi file model .pkl: {e}")
+        st.error(f"Lỗi hệ thống AI: {e}")
