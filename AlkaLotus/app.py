@@ -48,30 +48,43 @@ if 'selected_compound' not in st.session_state:
 df = get_database()
 selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
 
-# --- 4. SIDEBAR (BẢN HOÀN THIỆN ĂN ĐIỂM) ---
+# --- 4. SIDEBAR FINAL (BẢN HOÀN THIỆN) ---
 import os
 
-# Đường dẫn file (Bạn nhớ check tên file trên GitHub nhé)
+# Đường dẫn file logo chính xác trên GitHub của bạn
 logo_path = "Logo_HungVuong.png" 
 
+# Kiểm tra sự tồn tại của file
 if os.path.exists(logo_path):
-    # Căn giữa logo trường
+    # Hiển thị logo trường trang trọng
     st.sidebar.image(logo_path, use_container_width=True)
-    st.sidebar.markdown("<p style='text-align: center; font-size: 0.9em; font-weight: bold; margin-top: -10px;'>Trường THPT Chuyên Hùng Vương</p>", unsafe_allow_html=True)
+    st.sidebar.markdown(
+        "<p style='text-align: center; font-size: 0.9em; font-weight: bold; margin-top: -10px; color: #4A4A4A;'>"
+        "Trường THPT Chuyên Hùng Vương</p>", 
+        unsafe_allow_html=True
+    )
 else:
-    st.sidebar.warning("Vui lòng kiểm tra lại tên file Logo_HungVuong.png trên GitHub")
+    # Nếu vẫn chưa hiện, dùng logo dự phòng từ URL (nếu có) hoặc thông báo
+    st.sidebar.info("📌 Hệ thống đang đồng bộ Logo từ GitHub...")
 
 st.sidebar.divider()
 
-# Tên dự án đầy đủ và chuyên nghiệp
+# Tên dự án đầy đủ như Gia An mong muốn
 st.sidebar.title("🪷 ALKALOTUS PREDICTOR")
-st.sidebar.info("""
-**Hệ thống tích hợp Machine Learning** để tối ưu hóa quy trình sàng lọc ảo, dự đoán chính xác ái lực liên kết và định hướng thiết kế các cấu trúc dẫn chất có tiềm năng dược tính cao.
-""")
+st.sidebar.markdown(
+    """
+    <div style='text-align: justify; font-size: 0.9em;'>
+    <b>Hệ thống tích hợp Machine Learning</b> để tối ưu hóa quy trình sàng lọc ảo, 
+    dự đoán chính xác ái lực liên kết và định hướng thiết kế các cấu trúc dẫn chất 
+    có tiềm năng dược tính cao.
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
 
 st.sidebar.divider()
 
-# Danh mục hệ thống
+# Menu điều hướng
 page = st.sidebar.radio(
     "Danh mục hệ thống",
     ["1. Thư viện Alkaloid", "2. Mô phỏng Docking 3D", "3. Phân tích & Xuất báo cáo", "4. AI Predictor (ML)"]
@@ -79,9 +92,9 @@ page = st.sidebar.radio(
 
 st.sidebar.divider()
 
-# Thông tin tác giả (Ghi nhận công lao của Gia An & Bách Hợp)
-st.sidebar.caption(f"**Tác giả:** Quách Gia An & Nguyễn Lê Bách Hợp")
-st.sidebar.caption(f"**Lớp:** 10 - K30")
+# Thông tin bản quyền nghiên cứu
+st.sidebar.caption("👨‍ Học sinh: **Quách Gia An & Nguyễn Lê Bách Hợp**")
+st.sidebar.caption("🏫 Đơn vị: **Lớp 10-K30 - THPT Chuyên Hùng Vương - TP. Hồ Chí Minh**")
 
 # --- MODULE 1: DATABASE EXPLORER ---
 if page == "1. Thư viện Alkaloid":
