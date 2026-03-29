@@ -49,24 +49,21 @@ df = get_database()
 selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
 
 # --- 4. SIDEBAR FINAL (BẢN HOÀN THIỆN) ---
-import os
+# Link Raw trực tiếp từ GitHub của bạn
+# (Lưu ý: Thay 'giaan9417-rgb' nếu tên user của bạn khác, nhưng dựa theo hình ảnh thì đây là link chuẩn)
+logo_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/Logo_HungVuong.png"
 
-# Đường dẫn file logo chính xác trên GitHub của bạn
-logo_path = "Logo_HungVuong.png" 
+# Hiển thị logo trực tiếp từ URL
+st.sidebar.image(logo_url, use_container_width=True)
 
-# Kiểm tra sự tồn tại của file
-if os.path.exists(logo_path):
-    # Hiển thị logo trường trang trọng
-    st.sidebar.image(logo_path, use_container_width=True)
-    st.sidebar.markdown(
-        "<p style='text-align: center; font-size: 0.9em; font-weight: bold; margin-top: -10px; color: #4A4A4A;'>"
-        "Trường THPT Chuyên Hùng Vương</p>", 
-        unsafe_allow_html=True
-    )
-else:
-    # Nếu vẫn chưa hiện, dùng logo dự phòng từ URL (nếu có) hoặc thông báo
-    st.sidebar.info("📌 Hệ thống đang đồng bộ Logo từ GitHub...")
+st.sidebar.markdown(
+    "<p style='text-align: center; font-size: 0.9em; font-weight: bold; margin-top: -10px; color: #4A4A4A;'>"
+    "Trường THPT Chuyên Hùng Vương</p>", 
+    unsafe_allow_html=True
+)
 
+st.sidebar.divider()
+# ... (Các phần còn lại giữ nguyên)
 st.sidebar.divider()
 
 # Tên dự án đầy đủ như Gia An mong muốn
