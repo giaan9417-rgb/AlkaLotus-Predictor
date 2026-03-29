@@ -191,104 +191,65 @@ Cần các thử nghiệm In Vitro và In Vivo để xác minh kết quả.
         file_name=f"AlkaLotus_Report_{selected_data['Name']}.txt",
         mime="text/plain"
     )
-# --- MODULE 4: AI PREDICTOR (PHIÊN BẢN CẤP ĐỘ CHUYÊN GIA - WOW FACTOR) ---
+# --- MODULE 4: AI PREDICTOR (PHIÊN BẢN REAL-TIME XAI) ---
 elif page == "4. AI Predictor (ML)":
     st.title("🤖 AI Predictor - Machine Learning Research Core")
     st.markdown("""
     <div style='background-color: #F0F2F6; padding: 15px; border-radius: 10px; border-left: 5px solid #FF69B4;'>
-    <b>AI Research Core v2.0:</b> Mô hình <b>Random Forest Regressor</b> được huấn luyện trên 
-    bộ dữ liệu { len(get_database()) } Alkaloid lá sen thực tế để dự đoán và tối ưu hóa ái lực liên kết.
+    <b>Hệ thống XAI (Explainable AI):</b> Sử dụng thuật toán <b>Random Forest Regressor</b> để dự đoán ái lực liên kết 
+    và giải thích quyết định dựa trên trọng số các đặc trưng hóa lý.
     </div>
     """, unsafe_allow_html=True)
     
     try:
-        # Load mô hình thực tế từ file .pkl
+        # 1. Load mô hình thật từ file của Gia An
         model_ai = joblib.load('AlkaLotus/alkmer_model.pkl')
         
-        # Lấy dữ liệu thực tế để vẽ biểu đồ so sánh
-        real_df = get_database()
-        
-        # --- TAB PHÂN TÍCH VÀ DỰ ĐOÁN CHUYÊN SÂU ---
-        tab_pred, tab_opt, tab_interpret = st.tabs(["📊 Dự đoán & So sánh thực tế", "🔍 Tối ưu hóa cấu trúc", "🧠 Giải thích mô hình AI"])
+        # 2. Tabs chức năng
+        tab_pred, tab_interpret = st.tabs(["🎯 Dự đoán Real-time", "🧠 Giải thích thuật toán (XAI)"])
         
         with tab_pred:
-            with st.container():
-                st.markdown('<div class="card">', unsafe_allow_html=True)
-                c1, c2 = st.columns(2)
-                val_mw = c1.number_input("Khối lượng phân tử (MW):", min_value=100.0, value=300.0)
-                val_logp = c2.number_input("Hệ số LogP:", min_value=-2.0, value=3.0)
-                val_hbd = c1.slider("Số liên kết H-Donor:", 0, 10, 1)
-                val_hba = c2.slider("Số liên kết H-Acceptor:", 0, 20, 4)
+            st.markdown('<div class="card">', unsafe_allow_html=True)
+            c1, c2 = st.columns(2)
+            val_mw = c1.number_input("Khối lượng phân tử (MW):", min_value=100.0, max_value=1000.0, value=311.4)
+            val_logp = c2.number_input("Hệ số LogP (Lipophilicity):", min_value=-2.0, max_value=10.0, value=3.0)
+            val_hbd = c1.slider("Số liên kết H-Donor:", 0, 15, 1)
+            val_hba = c2.slider("Số liên kết H-Acceptor:", 0, 20, 5)
+            
+            if st.button("🚀 KÍCH HOẠT PHÂN TÍCH AI"):
+                # Dữ liệu đầu vào chuẩn hóa theo training
+                features = np.array([[val_mw, val_logp, val_hbd, val_hba]])
                 
-                # Tính năng WOW: Sai số mô hình (giả lập dựa trên độ phức tạp cấu trúc)
-                complexity = (val_mw * 0.001) + abs(val_logp * 0.1) + val_hbd + (val_hba * 0.5)
-                error_margin = round(complexity * 0.05 + 0.1, 2)
+                # Chạy dự đoán trực tiếp từ model .pkl
+                prediction = model_ai.predict(features)[0]
                 
-                if st.button("🔥 KÍCH HOẠT DỰ ĐOÁN AI NÂNG CAO"):
-                    # Chuyển dữ liệu về dạng mảng để AI đọc
-                    input_data = np.array([[val_mw, val_logp, val_hbd, val_hba]])
-                    
-                    # AI thực hiện tính toán
-                    res = model_ai.predict(input_data)[0]
-                    
-                    # --- WOW: Hiển thị kết quả chi tiết & So sánh thực tế ---
-                    st.subheader(f"Kết quả dự đoán ΔG: :red[{round(res, 2)} kcal/mol]")
-                    
-                    co1, co2 = st.columns([2, 3])
-                    with co1:
-                        # Hiển thị sai số mô hình
-                        st.metric("ΔG (+/- Sai số AI)", f"{round(res, 2)}", f"\u00B1 {error_margin}")
-                        st.caption(f"Độ phức tạp cấu trúc: {round(complexity, 2)} (Sai số ước tính)")
-                    
-                    with co2:
-                        #WOW: So sánh nhanh với thuốc đối chứng (BACE1)
-                        chart_data = pd.DataFrame({
-                            'Phân tử': ['Verubecestat (Đối chứng)', 'Hợp chất mới'],
-                            'ΔG (kcal/mol)': [-8.5, res],
-                            'Loại': ['Thực tế', 'Dự đoán AI']
-                        })
-                        st.bar_chart(chart_data, x='Phân tử', y='ΔG (kcal/mol)')
-                st.markdown('</div>', unsafe_allow_html=True)
+                # Hiển thị kết quả
+                st.divider()
+                col_res1, col_res2 = st.columns(2)
+                with col_res1:
+                    st.metric("Kết quả dự đoán ΔG", f"{round(prediction, 2)} kcal/mol")
+                with col_res2:
+                    potential = "Cao" if prediction < -8.0 else "Trung bình"
+                    st.metric("Tiềm năng ức chế", potential)
                 
-            # WOW: Vẽ biểu đồ vị trí hợp chất mới trên tập dữ liệu thực tế
-            st.subheader("Hợp chất của bạn nằm ở đâu?")
-            st.warning("⚠️ Đang giả lập biểu đồ so sánh dữ liệu thực tế...")
-            chart_real_data = pd.DataFrame({
-                'LogP': real_df['LogP'],
-                'dG_BACE1': real_df['dG_BACE1'],
-                'Type': ['Real Alkaloid'] * len(real_df)
-            })
-            if st.button("Show Molecular Scatter"):
-                new_point = pd.DataFrame({'LogP': [val_logp], 'dG_BACE1': [res], 'Type': ['Your New Compound']})
-                scatter_data = pd.concat([chart_real_data, new_point])
-                st.scatter_chart(scatter_data, x='LogP', y='dG_BACE1', color='Type')
-                st.write("Giải thích: Chấm màu Hồng sen là hợp chất mới của bạn nằm ở đâu so với các hợp chất đã nghiên cứu.")
+                # So sánh trực tiếp với thuốc đối chứng trong báo cáo
+                st.info(f"Độ lệch so với Verubecestat (Đối chứng): {round(abs(prediction - (-8.5)), 2)} kcal/mol")
+            st.markdown('</div>', unsafe_allow_html=True)
 
         with tab_interpret:
-            st.subheader("Tại sao AI đưa ra con số này?")
-            # WOW: Giải thích Feature Importance từ mô hình Random Forest thật
-            importances = model_ai.feature_importances_
-            labels = ['MW', 'LogP', 'HBD', 'HBA']
-            feature_imp_df = pd.DataFrame({'Chỉ số': labels, 'Tầm quan trọng': importances})
-            feature_imp_df = feature_imp_df.sort_values(by='Tầm quan trọng', ascending=False)
+            st.subheader("Trích xuất Feature Importance (Trọng số đặc trưng)")
+            st.write("Biểu đồ này được trích xuất trực tiếp từ mô hình bạn đã huấn luyện, cho thấy yếu tố nào quyết định ái lực liên kết:")
             
-            # Biểu đồ thanh cho Feature Importance
-            st.bar_chart(feature_imp_df, x='Chỉ số', y='Tầm quan trọng')
-            st.info(f"Giáo sư {feature_imp_df['Chỉ số'].iloc[0]} ảnh hưởng lớn nhất đến kết quả dự đoán.")
-            st.caption("Feature Importance được tính từ mô hình Random Forest real-time.")
-
-        with tab_opt:
-            st.subheader("Tối ưu hóa cấu trúc ngược")
-            st.warning("⚠️ Đây là tính năng nâng cao (Reverse Search). Hệ thống đang thực hiện tối ưu hóa cấu trúc ngược.")
-            # WOW: Tính năng Reverse Search giả lập
-            st.markdown("""
-            <b>Hướng dẫn:</b> Tăng LogP và MW để tối ưu hóa ái lực liên kết (BACE1). 
-            Dự kiến hợp chất mới có thể có ΔG < -9.0 kcal/mol nếu LogP > 3.5.
-            """)
-            opt_logp = st.number_input("LogP Mong muốn:", value=4.0)
-            if st.button("Tạo cấu trúc tối ưu (Giả lập)"):
-                opt_mw = val_mw * (1 + (opt_logp - val_logp) * 0.1)
-                st.success(f"Cấu trúc tối ưu đề xuất: MW ~ {round(opt_mw, 2)}, LogP = {opt_logp}")
+            # Lấy trọng số thật từ mô hình Random Forest
+            importances = model_ai.feature_importances_
+            feature_names = ['MW', 'LogP', 'HBD', 'HBA']
+            imp_df = pd.DataFrame({'Đặc trưng': feature_names, 'Trọng số': importances}).sort_values(by='Trọng số', ascending=True)
+            
+            # Vẽ biểu đồ ngang cho chuyên nghiệp
+            st.bar_chart(imp_df, x='Đặc trưng', y='Trọng số', horizontal=True)
+            
+            st.success(f"Dựa trên dữ liệu huấn luyện, **{imp_df.iloc[-1]['Đặc trưng']}** là yếu tố có ảnh hưởng mạnh nhất đến khả năng ức chế enzyme.")
 
     except Exception as e:
-        st.error(f"Lỗi Chuyên gia: Không tìm thấy file 'AlkaLotus/alkmer_model.pkl'. Gia An ơi hãy check lại file .pkl trên GitHub nhé!")
+        st.error(f"Lỗi hệ thống: {e}")
+        st.warning("Gia An hãy kiểm tra chắc chắn file 'AlkaLotus/alkmer_model.pkl' đã được upload lên GitHub nhé!")
