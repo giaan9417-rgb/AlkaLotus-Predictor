@@ -48,22 +48,27 @@ if 'selected_compound' not in st.session_state:
 df = get_database()
 selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
 
-# --- 4. SIDEBAR FINAL (BẢN HOÀN THIỆN) ---
-# Link Raw trực tiếp từ GitHub của bạn
-# (Lưu ý: Thay 'giaan9417-rgb' nếu tên user của bạn khác, nhưng dựa theo hình ảnh thì đây là link chuẩn)
-logo_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/Logo_HungVuong.png"
+# --- 4. SIDEBAR - HIỆN LOGO CHUẨN ---
+import os
 
-# Hiển thị logo trực tiếp từ URL
-st.sidebar.image(logo_url, use_container_width=True)
+# Tên file chính xác bạn đã upload lên cùng thư mục với app.py
+logo_filename = "Logo_HungVuong.png"
 
-st.sidebar.markdown(
-    "<p style='text-align: center; font-size: 0.9em; font-weight: bold; margin-top: -10px; color: #4A4A4A;'>"
-    "Trường THPT Chuyên Hùng Vương</p>", 
-    unsafe_allow_html=True
-)
+# Kiểm tra file nội bộ (Cách này ổn định nhất khi đã có file trên GitHub)
+if os.path.exists(logo_filename):
+    st.sidebar.image(logo_filename, width=150) # Chỉnh width để logo vừa vặn
+    st.sidebar.markdown(
+        "<p style='text-align: center; font-size: 1.1em; font-weight: bold; margin-top: -10px; color: #2E2E2E;'>"
+        "Trường THPT Chuyên Hùng Vương</p>", 
+        unsafe_allow_html=True
+    )
+else:
+    # Nếu vẫn lỗi, dùng link dự phòng (Đây là link chuẩn từ GitHub của bạn)
+    fallback_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png"
+    st.sidebar.image(fallback_url, width=150)
+    st.sidebar.markdown("<p style='text-align: center;'>Trường THPT Chuyên Hùng Vương</p>", unsafe_allow_html=True)
 
 st.sidebar.divider()
-# ... (Các phần còn lại giữ nguyên)
 st.sidebar.divider()
 
 # Tên dự án đầy đủ như Gia An mong muốn
