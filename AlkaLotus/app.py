@@ -56,7 +56,7 @@ if 'selected_compound' not in st.session_state:
 df = get_database()
 selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
 
-# --- 4. SIDEBAR (Cấu trúc sửa lỗi hiển thị Logo) ---
+# --- 4. SIDEBAR
 st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 
 # 1. Thử load logo từ nhiều đường dẫn khả thi
@@ -74,7 +74,6 @@ for path in logo_paths:
         logo_found = True
         break
 
-# 2. Nếu không tìm thấy file cục bộ, dùng link raw từ GitHub
 if not logo_found:
     github_logo_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png.png"
     st.sidebar.image(github_logo_url, width=130)
@@ -82,9 +81,9 @@ if not logo_found:
 st.sidebar.markdown(
     """
     <p style='font-size: 1em; font-weight: bold; color: #2E2E2E; margin-top: 5px; margin-bottom: 0px;'>
-        Trường THPT Chuyên Hùng Vương
+        TRƯỜNG THPT CHUYÊN HÙNG VƯƠNG
     </p>
-    <p style='font-size: 0.8em; color: #666;'>TP. Thủ Dầu Một - Bình Dương</p>
+    <p style='font-size: 0.8em; color: #666;'>TP. HỒ CHÍ MINH</p>
     """, 
     unsafe_allow_html=True
 )
