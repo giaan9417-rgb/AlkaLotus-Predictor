@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import joblib
 import numpy as np
+import time # Thêm thư viện thời gian để tạo hiệu ứng
 from stmol import showmol
 from data import get_database
 from utils import fetch_pdb, render_3d_molecule, check_lipinski, create_admet_radar, classify_potential
@@ -50,14 +51,12 @@ selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
 
 # --- 4. SIDEBAR
 import os
-# Sửa tên file logo cho khớp với GitHub của bạn (Logo_HungVuong.png.png)
 logo_filename = "Logo_HungVuong.png.png" 
 st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 
 if os.path.exists(logo_filename):
     st.sidebar.image(logo_filename, width=130)
 else:
-    # URL dự phòng chính xác từ repo của bạn
     fallback_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png.png"
     st.sidebar.image(fallback_url, width=130)
 
@@ -156,7 +155,7 @@ elif page == "3. Phân tích & Xuất báo cáo":
     report_text = f"Báo cáo: {selected_data['Name']}\nBACE1: {selected_data['dG_BACE1']}\nAChE: {selected_data['dG_AChE']}"
     st.download_button("📥 TẢI BÁO CÁO CHI TIẾT", data=report_text, file_name="AlkaLotus_Report.txt")
 
-# --- MODULE 4: AI PREDICTOR (BẢN FULL GIỮ NGUYÊN THÔNG TIN) ---
+# --- MODULE 4: AI PREDICTOR ---
 elif page == "4. AI Predictor (ML)":
     st.title("🛡️ AI Research Expert - Molecular Screening")
     st.markdown("<div style='background-color: #F0F2F6; padding: 15px; border-radius: 10px; border-left: 5px solid #FF69B4;'><b>Đánh giá đa tầng:</b> Dự đoán ái lực & Sàng lọc dược tính.</div>", unsafe_allow_html=True)
@@ -179,10 +178,22 @@ elif page == "4. AI Predictor (ML)":
                 st.markdown('</div>', unsafe_allow_html=True)
                 
             if btn_analyze:
+                # --- TÍNH NĂNG MỚI: HIỆU ỨNG AI THINKING ---
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                
+                for i in range(1, 101):
+                    # Giả lập quá trình rừng cây đang "hội ý"
+                    status_text.markdown(f"✨ *Đang tổng hợp ý kiến từ cây quyết định thứ **{i}/100**...*")
+                    progress_bar.progress(i)
+                    time.sleep(0.01) # Tạo hiệu ứng chuyển động nhanh
+                
+                status_text.success("✅ AI đã hoàn tất quá trình hội ý!")
+                # ------------------------------------------
+
                 features = np.array([[v_mw, v_logp, v_hbd, v_hba]])
                 pred_dg = model_ai.predict(features)[0]
                 
-                # Tính Drug-likeness (Tính năng giữ nguyên)
                 violations = sum([v_mw > 500, v_logp > 5, v_hbd > 5, v_hba > 10])
                 safety_score = 100 - (violations * 25)
 
@@ -203,7 +214,7 @@ elif page == "4. AI Predictor (ML)":
             st.subheader("🧠 Giải thích quyết định của AI (XAI)")
             importances = model_ai.feature_importances_
             imp_df = pd.DataFrame({'Yếu tố': ['MW', 'LogP', 'HBD', 'HBA'], 'Mức độ ảnh hưởng': importances})
-            st.bar_chart(imp_df.set_index('Yếu tố'))
+            st.bar_chart(imp_df.set_index('Yế tố'))
 
     except Exception as e:
         st.error(f"Kiểm tra file model trên GitHub: {e}")
