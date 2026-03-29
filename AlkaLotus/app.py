@@ -52,7 +52,6 @@ selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
 import os
 
 logo_filename = "Logo_HungVuong.png"
-
 st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 
 if os.path.exists(logo_filename):
@@ -70,9 +69,7 @@ st.sidebar.markdown(
     """, 
     unsafe_allow_html=True
 )
-
 st.sidebar.markdown("</div>", unsafe_allow_html=True)
-st.sidebar.divider()
 st.sidebar.divider()
 
 st.sidebar.title("🪷 ALKALOTUS PREDICTOR")
@@ -88,16 +85,11 @@ st.sidebar.markdown(
 )
 
 st.sidebar.divider()
-
-# Menu điều hướng
 page = st.sidebar.radio(
     "Danh mục hệ thống",
     ["1. Thư viện Alkaloid", "2. Mô phỏng Docking 3D", "3. Phân tích & Xuất báo cáo", "4. AI Predictor (ML)"]
 )
-
 st.sidebar.divider()
-
-# Thông tin bản quyền nghiên cứu
 st.sidebar.caption("👨‍ Học sinh: **Quách Gia An & Nguyễn Lê Bách Hợp**")
 st.sidebar.caption("🏫 Đơn vị: **Lớp 10-K30 - THPT Chuyên Hùng Vương - TP. Hồ Chí Minh**")
 
@@ -144,29 +136,21 @@ elif page == "2. Mô phỏng Docking 3D":
             else:
                 st.error("Không thể kết nối Server PDB.")
 
-# --- MODULE 3: ANALYTICS & REPORT (SỬA LỖI GIAO DIỆN) ---
+# --- MODULE 3: ANALYTICS & REPORT ---
 elif page == "3. Phân tích & Xuất báo cáo":
     st.title("📊 Kết quả phân tích dược tính")
-    
-    # Tạo 2 cột cân bằng
     col_left, col_right = st.columns([1, 1]) 
     
     with col_left:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         st.subheader("🎯 Năng lượng liên kết (Affinity)")
-        
-        # BACE1
         st.metric("BACE1 ΔG", f"{selected_data['dG_BACE1']} kcal/mol", delta="-8.5 (Veru)", delta_color="inverse")
         st.caption(f"Đánh giá: {classify_potential(selected_data['dG_BACE1'])}")
-        
-        st.write("---") # Đường kẻ phân cách nhỏ
-        
-        # AChE
+        st.write("---")
         st.metric("AChE ΔG", f"{selected_data['dG_AChE']} kcal/mol", delta="-7.9 (Done)", delta_color="inverse")
         st.caption(f"Đánh giá: {classify_potential(selected_data['dG_AChE'])}")
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # Cảnh báo BBB nằm ngay dưới bảng chỉ số
         if selected_data['BBB_Permeability']:
             st.success("✅ Dự đoán: Có khả năng xuyên rào máu não (BBB)")
         else:
@@ -174,23 +158,15 @@ elif page == "3. Phân tích & Xuất báo cáo":
 
     with col_right:
         st.markdown('<div class="card" style="height: 100%;">', unsafe_allow_html=True)
-        st.subheader("🕸️ Hồ sơ ADMET Radar") # Đưa tiêu đề vào trong Card
-        
-        # Vẽ biểu đồ Radar
+        st.subheader("🕸️ Hồ sơ ADMET Radar")
         fig = create_admet_radar(selected_data)
-        # Chỉnh lề biểu đồ để không chiếm quá nhiều không gian gây lệch
         fig.update_layout(margin=dict(l=20, r=20, t=20, b=20)) 
         st.plotly_chart(fig, use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
-    # Nút xuất báo cáo giữ nguyên...
-    
-    st.markdown("---")
-    
-st.markdown("---")
 
-    # --- BẮT ĐẦU PHẦN DÁN: KIỂM CHỨNG KHOA HỌC (SCIENTIFIC VALIDATION) ---
+    # --- KIỂM CHỨNG KHOA HỌC (Validation) ---
     st.header("🔬 Kiểm chứng độ tin cậy mô hình (Validation)")
     st.markdown("""
     <div style='background-color: #F8F9FA; padding: 15px; border-radius: 10px; border-left: 5px solid #28A745; margin-bottom: 20px;'>
@@ -199,7 +175,6 @@ st.markdown("---")
     </div>
     """, unsafe_allow_html=True)
 
-    # Dữ liệu thật 100% từ các công bố khoa học
     real_data = {
         "Hợp chất": ["Neferine", "Isoliensinine", "Liensinine", "Nuciferine"],
         "Thực nghiệm (IC50)": ["2.16 µM", "5.45 µM", "6.08 µM", "45.20 µM"],
@@ -207,93 +182,66 @@ st.markdown("---")
         "Độ tương quan": ["Khớp mạnh nhất ✅", "Chính xác ✅", "Chính xác ✅", "Chính xác ✅"],
         "Nguồn trích dẫn": ["PMID: 25442253", "PMID: 25442253", "PMID: 25442253", "Elsevier 2015"]
     }
-
-    df_real = pd.DataFrame(real_data)
-    
-    # Hiển thị bảng chuyên nghiệp
-    st.table(df_real)
-
-    st.info("""
-    👉 **Nhận xét chuyên môn:** Thứ tự hoạt tính thực nghiệm (IC50) hoàn toàn tỉ lệ thuận với ái lực liên kết 
-    mà hệ thống AI dự đoán. Các hợp chất có IC50 càng nhỏ (hoạt tính càng mạnh) thì điểm số AI đưa ra càng âm. 
-    Sự đồng nhất này chứng minh thuật toán đạt độ tin cậy cao, hỗ trợ tốt cho việc định hướng thiết kế thuốc.
-    """)
-    # --- KẾT THÚC PHẦN DÁN ---
+    st.table(pd.DataFrame(real_data))
+    st.info("👉 **Nhận xét chuyên môn:** Thứ tự hoạt tính thực nghiệm (IC50) hoàn toàn tỉ lệ thuận với ái lực liên kết AI dự đoán.")
 
     st.markdown("---")
+
+    # Chuẩn bị nội dung báo cáo để tải xuống
+    report_content = f"""
+======================================================================
+         BÁO CÁO PHÂN TÍCH DƯỢC TÍNH PHÂN TỬ - ALKALOTUS PREDICTOR
+======================================================================
+Dự án: Nghiên cứu In Silico dẫn xuất Alkaloid từ lá sen điều trị Alzheimer
+Tác giả: Quách Gia An - Nguyễn Lê Bách Hợp
+Đơn vị: Lớp 10-K30 - Trường THPT Chuyên Hùng Vương
+----------------------------------------------------------------------
+I. THÔNG TIN HỢP CHẤT: {selected_data['Name']} ({selected_data['Formula']})
+II. LIPINSKI RULE: {'ĐẠT' if check_lipinski(selected_data) else 'KHÔNG ĐẠT'}
+III. DOCKING AFFINITY:
+- BACE1: {selected_data['dG_BACE1']} kcal/mol
+- AChE: {selected_data['dG_AChE']} kcal/mol
+----------------------------------------------------------------------
+"""
     st.download_button(
         label="📥 TẢI BÁO CÁO NGHIÊN CỨU CHI TIẾT (.TXT)",
         data=report_content,
         file_name=f"AlkaLotus_Report_{selected_data['Name']}.txt",
         mime="text/plain"
     )
-# --- MODULE 4: AI PREDICTOR (PHIÊN BẢN CHUYÊN GIA - "ĂN ĐIỂM TUYỆT ĐỐI") ---
+
+# --- MODULE 4: AI PREDICTOR ---
 elif page == "4. AI Predictor (ML)":
     st.title("🛡️ AI Research Expert - Molecular Screening")
-    st.markdown("""
-    <div style='background-color: #F0F2F6; padding: 15px; border-radius: 10px; border-left: 5px solid #FF69B4;'>
-    <b>Hệ thống đánh giá đa tầng:</b> Kết hợp Machine Learning để dự đoán ái lực (Affinity) và 
-    thuật toán sàng lọc dược tính (ADMET Screening).
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<div style='background-color: #F0F2F6; padding: 15px; border-radius: 10px; border-left: 5px solid #FF69B4;'><b>Hệ thống đánh giá đa tầng:</b> Kết hợp Machine Learning dự đoán ái lực.</div>", unsafe_allow_html=True)
     
     try:
         model_ai = joblib.load('AlkaLotus/alkmer_model.pkl')
-        
         tab_main, tab_expert = st.tabs(["🎯 Dự đoán & Đánh giá", "🔬 Phân tích XAI Chuyên sâu"])
         
         with tab_main:
             c1, c2 = st.columns([2, 1])
             with c1:
                 st.markdown('<div class="card">', unsafe_allow_html=True)
-                col_in1, col_in2 = st.columns(2)
-                v_mw = col_in1.number_input("Khối lượng (MW):", 100.0, 1000.0, 311.4)
-                v_logp = col_in2.number_input("LogP (Lipophilicity):", -2.0, 10.0, 3.0)
-                v_hbd = col_in1.slider("H-Donor:", 0, 12, 1)
-                v_hba = col_in2.slider("H-Acceptor:", 0, 20, 5)
-                
+                v_mw = st.number_input("Khối lượng (MW):", 100.0, 1000.0, 311.4)
+                v_logp = st.number_input("LogP (Lipophilicity):", -2.0, 10.0, 3.0)
+                v_hbd = st.slider("H-Donor:", 0, 12, 1)
+                v_hba = st.slider("H-Acceptor:", 0, 20, 5)
                 btn_analyze = st.button("⚡ CHẠY PHÂN TÍCH HỆ THỐNG")
                 st.markdown('</div>', unsafe_allow_html=True)
                 
             if btn_analyze:
-                # 1. Dự đoán Delta G
                 features = np.array([[v_mw, v_logp, v_hbd, v_hba]])
                 pred_dg = model_ai.predict(features)[0]
-                
-                # 2. Tính toán Drug-likeness Score (Wow factor)
-                violations = 0
-                if v_mw > 500: violations += 1
-                if v_logp > 5: violations += 1
-                if v_hbd > 5: violations += 1
-                if v_hba > 10: violations += 1
-                safety_score = 100 - (violations * 25)
-
                 with c2:
                     st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
-                    st.metric("Chỉ số Drug-likeness", f"{safety_score}%")
-                    if safety_score >= 75:
-                        st.success("✅ Tiềm năng thuốc tốt")
-                    else:
-                        st.warning("⚠️ Cần tối ưu cấu trúc")
-
-                # 3. Biểu đồ Radar so sánh với thuốc chuẩn
-                st.subheader("So sánh với 'Thuốc vàng' Verubecestat")
-                comp_data = pd.DataFrame({
-                    "Chỉ số": ["ΔG (Affinity)", "LogP (Độ tan)", "Drug-likeness"],
-                    "Hợp chất của bạn": [abs(pred_dg)/10, v_logp/5, safety_score/100],
-                    "Verubecestat": [0.85, 0.6, 1.0]
-                })
-                st.line_chart(comp_data.set_index("Chỉ số"))
+                    st.success("✅ Phân tích hoàn tất")
 
         with tab_expert:
             st.subheader("🧠 Giải thích quyết định của AI (XAI)")
             importances = model_ai.feature_importances_
-            feature_names = ['Khối lượng (MW)', 'Độ ưa dầu (LogP)', 'H-Donor', 'H-Acceptor']
-            
-            # Tạo biểu đồ phân bổ trọng số
-            imp_df = pd.DataFrame({'Yếu tố': feature_names, 'Mức độ ảnh hưởng': importances})
+            imp_df = pd.DataFrame({'Yếu tố': ['MW', 'LogP', 'HBD', 'HBA'], 'Mức độ ảnh hưởng': importances})
             st.bar_chart(imp_df.set_index('Yếu tố'))
-            
 
     except Exception as e:
-        st.error("Gia An hãy kiểm tra file .pkl trên GitHub nhé!")
+        st.error(f"Lỗi tải mô hình AI: {e}")
