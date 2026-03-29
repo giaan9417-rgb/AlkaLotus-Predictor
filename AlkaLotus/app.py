@@ -258,10 +258,6 @@ elif page == "4. AI Predictor (ML)":
             imp_df = pd.DataFrame({'Yếu tố': feature_names, 'Mức độ ảnh hưởng': importances})
             st.bar_chart(imp_df.set_index('Yếu tố'))
             
-            st.info("""
-            **Giải thích cho Ban giám khảo:** Biểu đồ trên cho thấy mô hình Random Forest đang ưu tiên yếu tố nào 
-            để xác định lực liên kết. Điều này giúp chúng em định hướng nhóm thế hóa học khi tổng hợp dẫn xuất mới.
-            """)
 
     except Exception as e:
         st.error("Gia An hãy kiểm tra file .pkl trên GitHub nhé!")
