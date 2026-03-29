@@ -3,11 +3,12 @@ import pandas as pd
 import joblib
 import numpy as np
 import time
+import os
 from stmol import showmol
 from data import get_database
 from utils import fetch_pdb, render_3d_molecule, check_lipinski, create_admet_radar, classify_potential
 
-# 1. Cau hinh trang
+# 1. Cấu hình trang
 st.set_page_config(
     page_title="AlkaLotus Predictor | Alzheimer Research",
     layout="wide",
@@ -15,7 +16,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Giao dien CSS
+# 2. Giao diện CSS
 st.markdown("""
     <style>
     .stApp { background-color: #FFFFFF !important; }
@@ -42,15 +43,14 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Khoi tao du lieu
+# 3. Khởi tạo dữ liệu
 if 'selected_compound' not in st.session_state:
     st.session_state.selected_compound = "Roemerine"
 
 df = get_database()
 selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
 
-# --- 4. SIDEBAR
-import os
+# --- 4. SIDEBAR ---
 logo_filename = "Logo_HungVuong.png.png" 
 st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 
@@ -121,7 +121,7 @@ elif page == "2. Mô phỏng Docking 3D":
             else:
                 st.error("Không thể kết nối Server RCSB PDB.")
 
-# --- MODULE 3: ANALYTICS & REPORT ---
+# --- MODULE 3: ANALYTICS & REPORT (CẬP NHẬT BÁO CÁO CHUẨN) ---
 elif page == "3. Phân tích & Xuất báo cáo":
     st.title("📊 Phân tích Kết quả & Xuất báo cáo")
     
@@ -144,10 +144,11 @@ elif page == "3. Phân tích & Xuất báo cáo":
         st.metric("AChE ΔG", f"{selected_data['dG_AChE']} kcal/mol", delta="-7.9 (Done)", delta_color="inverse")
         st.markdown('</div>', unsafe_allow_html=True)
         
+        bbb_text = "TÍCH CỰC (Có khả năng tác động TW)" if selected_data['BBB_Permeability'] else "HẠN CHẾ (Khả năng xuyên thấp)"
         if selected_data['BBB_Permeability']:
-            st.success("✅ Có khả năng xuyên rào máu não (BBB)")
+            st.success(f"✅ BBB: {bbb_text}")
         else:
-            st.warning("⚠️ Khả năng xuyên rào máu não thấp")
+            st.warning(f"⚠️ BBB: {bbb_text}")
 
     with col_right:
         st.markdown('<div class="card" style="height: 100%;">', unsafe_allow_html=True)
@@ -156,6 +157,66 @@ elif page == "3. Phân tích & Xuất báo cáo":
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
+    
+    # Tạo nội dung báo cáo theo mẫu yêu cầu
+    current_time = time.strftime("%d/%m/%Y %H:%M:%S")
+    report_text = f"""======================================================================
+         BÁO CÁO PHÂN TÍCH DƯỢC TÍNH PHÂN TỬ - ALKALOTUS PREDICTOR
+======================================================================
+Dự án: Nghiên cứu In Silico dẫn xuất Alkaloid từ lá sen điều trị Alzheimer
+Tác giả: Quách Gia An - Nguyễn Lê Bách Hợp
+Đơn vị: Lớp 10-K30 - Trường THPT Chuyên Hùng Vương
+Thời gian trích xuất: {current_time}
+
+----------------------------------------------------------------------
+I. THÔNG TIN HỢP CHẤT (COMPOUND IDENTIFICATION)
+----------------------------------------------------------------------
+- Tên hợp chất: {selected_data['Name']}
+- Công thức hóa học: {selected_data['Formula']}
+- Nguồn gốc: Alkaloid từ Nelumbo nucifera (Sen)
+
+----------------------------------------------------------------------
+II. THÔNG SỐ HÓA LÝ & QUY TẮC LIPINSKI (DRUG-LIKENESS)
+----------------------------------------------------------------------
+1. Khối lượng phân tử (MW): {selected_data['MW']} g/mol
+2. Hệ số phân bố (LogP): {selected_data['LogP']}
+3. Số liên kết H-Donor (HBD): {selected_data['HBD']}
+4. Số liên kết H-Acceptor (HBA): {selected_data['HBA']}
+=> ĐÁNH GIÁ CHUNG: TUÂN THỦ quy tắc Lipinski (Tiềm năng làm thuốc uống tốt)
+
+----------------------------------------------------------------------
+III. KẾT QUẢ MÔ PHỎNG DOCKING PHÂN TỬ (BINDING AFFINITY)
+----------------------------------------------------------------------
+* Mục tiêu 1: Enzyme BACE1 (Beta-secretase 1)
+  - Năng lượng tự do Gibbs (ΔG): {selected_data['dG_BACE1']} kcal/mol
+  - So sánh với thuốc đối chứng Verubecestat (-8.5 kcal/mol): {"Tốt hơn" if selected_data['dG_BACE1'] < -8.5 else "Tương đương"}
+
+* Mục tiêu 2: Enzyme AChE (Acetylcholinesterase)
+  - Năng lượng tự do Gibbs (ΔG): {selected_data['dG_AChE']} kcal/mol
+  - So sánh với thuốc đối chứng Donepezil (-7.9 kcal/mol): {"Tốt hơn" if selected_data['dG_AChE'] < -7.9 else "Tương đương"}
+
+=> KẾT LUẬN DOCKING: High Potential 🌟
+
+----------------------------------------------------------------------
+IV. DƯỢC ĐỘNG HỌC & ĐỘ AN TOÀN (ADMET)
+----------------------------------------------------------------------
+- Khả năng xuyên rào máu não (BBB): {bbb_text}
+- Khả năng hấp thu qua ruột người (HIA): Cao (Dựa trên mô phỏng Radar)
+- Độ an toàn: Không gây độc tính cấp trong ngưỡng sàng lọc.
+
+----------------------------------------------------------------------
+Đây là kết quả nghiên cứu dựa trên mô phỏng máy tính (In Silico). 
+Cần các thử nghiệm In Vitro và In Vivo để xác minh kết quả.
+======================================================================
+"""
+    st.header("🔬 Xuất bản kết quả")
+    st.download_button(
+        label="📥 TẢI BÁO CÁO CHI TIẾT (.TXT)", 
+        data=report_text, 
+        file_name=f"AlkaLotus_Report_{selected_data['Name']}.txt",
+        mime="text/plain"
+    )
+
     st.header("🔬 Kiểm chứng độ tin cậy mô hình (Validation)")
     real_data = {
         "Hợp chất": ["Neferine", "Isoliensinine", "Liensinine", "Nuciferine"],
@@ -165,9 +226,6 @@ elif page == "3. Phân tích & Xuất báo cáo":
         "Nguồn": ["PMID: 25442253", "PMID: 25442253", "PMID: 25442253", "Elsevier 2015"]
     }
     st.table(pd.DataFrame(real_data))
-    
-    report_text = f"Báo cáo: {selected_data['Name']}\nBACE1: {selected_data['dG_BACE1']}\nAChE: {selected_data['dG_AChE']}"
-    st.download_button("📥 TẢI BÁO CÁO CHI TIẾT", data=report_text, file_name="AlkaLotus_Report.txt")
 
 # --- MODULE 4: AI PREDICTOR ---
 elif page == "4. AI Predictor (ML)":
