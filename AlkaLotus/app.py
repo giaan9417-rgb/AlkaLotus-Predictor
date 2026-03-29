@@ -191,65 +191,77 @@ Cần các thử nghiệm In Vitro và In Vivo để xác minh kết quả.
         file_name=f"AlkaLotus_Report_{selected_data['Name']}.txt",
         mime="text/plain"
     )
-# --- MODULE 4: AI PREDICTOR (PHIÊN BẢN REAL-TIME XAI) ---
+# --- MODULE 4: AI PREDICTOR (PHIÊN BẢN CHUYÊN GIA - "ĂN ĐIỂM TUYỆT ĐỐI") ---
 elif page == "4. AI Predictor (ML)":
-    st.title("🤖 AI Predictor - Machine Learning Research Core")
+    st.title("🛡️ AI Research Expert - Molecular Screening")
     st.markdown("""
     <div style='background-color: #F0F2F6; padding: 15px; border-radius: 10px; border-left: 5px solid #FF69B4;'>
-    <b>Hệ thống XAI (Explainable AI):</b> Sử dụng thuật toán <b>Random Forest Regressor</b> để dự đoán ái lực liên kết 
-    và giải thích quyết định dựa trên trọng số các đặc trưng hóa lý.
+    <b>Hệ thống đánh giá đa tầng:</b> Kết hợp Machine Learning để dự đoán ái lực (Affinity) và 
+    thuật toán sàng lọc dược tính (ADMET Screening).
     </div>
     """, unsafe_allow_html=True)
     
     try:
-        # 1. Load mô hình thật từ file của Gia An
         model_ai = joblib.load('AlkaLotus/alkmer_model.pkl')
         
-        # 2. Tabs chức năng
-        tab_pred, tab_interpret = st.tabs(["🎯 Dự đoán Real-time", "🧠 Giải thích thuật toán (XAI)"])
+        tab_main, tab_expert = st.tabs(["🎯 Dự đoán & Đánh giá", "🔬 Phân tích XAI Chuyên sâu"])
         
-        with tab_pred:
-            st.markdown('<div class="card">', unsafe_allow_html=True)
-            c1, c2 = st.columns(2)
-            val_mw = c1.number_input("Khối lượng phân tử (MW):", min_value=100.0, max_value=1000.0, value=311.4)
-            val_logp = c2.number_input("Hệ số LogP (Lipophilicity):", min_value=-2.0, max_value=10.0, value=3.0)
-            val_hbd = c1.slider("Số liên kết H-Donor:", 0, 15, 1)
-            val_hba = c2.slider("Số liên kết H-Acceptor:", 0, 20, 5)
-            
-            if st.button("🚀 KÍCH HOẠT PHÂN TÍCH AI"):
-                # Dữ liệu đầu vào chuẩn hóa theo training
-                features = np.array([[val_mw, val_logp, val_hbd, val_hba]])
+        with tab_main:
+            c1, c2 = st.columns([2, 1])
+            with c1:
+                st.markdown('<div class="card">', unsafe_allow_html=True)
+                col_in1, col_in2 = st.columns(2)
+                v_mw = col_in1.number_input("Khối lượng (MW):", 100.0, 1000.0, 311.4)
+                v_logp = col_in2.number_input("LogP (Lipophilicity):", -2.0, 10.0, 3.0)
+                v_hbd = col_in1.slider("H-Donor:", 0, 12, 1)
+                v_hba = col_in2.slider("H-Acceptor:", 0, 20, 5)
                 
-                # Chạy dự đoán trực tiếp từ model .pkl
-                prediction = model_ai.predict(features)[0]
+                btn_analyze = st.button("⚡ CHẠY PHÂN TÍCH HỆ THỐNG")
+                st.markdown('</div>', unsafe_allow_html=True)
                 
-                # Hiển thị kết quả
-                st.divider()
-                col_res1, col_res2 = st.columns(2)
-                with col_res1:
-                    st.metric("Kết quả dự đoán ΔG", f"{round(prediction, 2)} kcal/mol")
-                with col_res2:
-                    potential = "Cao" if prediction < -8.0 else "Trung bình"
-                    st.metric("Tiềm năng ức chế", potential)
+            if btn_analyze:
+                # 1. Dự đoán Delta G
+                features = np.array([[v_mw, v_logp, v_hbd, v_hba]])
+                pred_dg = model_ai.predict(features)[0]
                 
-                # So sánh trực tiếp với thuốc đối chứng trong báo cáo
-                st.info(f"Độ lệch so với Verubecestat (Đối chứng): {round(abs(prediction - (-8.5)), 2)} kcal/mol")
-            st.markdown('</div>', unsafe_allow_html=True)
+                # 2. Tính toán Drug-likeness Score (Wow factor)
+                violations = 0
+                if v_mw > 500: violations += 1
+                if v_logp > 5: violations += 1
+                if v_hbd > 5: violations += 1
+                if v_hba > 10: violations += 1
+                safety_score = 100 - (violations * 25)
 
-        with tab_interpret:
-            st.subheader("Trích xuất Feature Importance (Trọng số đặc trưng)")
-            st.write("Biểu đồ này được trích xuất trực tiếp từ mô hình bạn đã huấn luyện, cho thấy yếu tố nào quyết định ái lực liên kết:")
-            
-            # Lấy trọng số thật từ mô hình Random Forest
+                with c2:
+                    st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
+                    st.metric("Chỉ số Drug-likeness", f"{safety_score}%")
+                    if safety_score >= 75:
+                        st.success("✅ Tiềm năng thuốc tốt")
+                    else:
+                        st.warning("⚠️ Cần tối ưu cấu trúc")
+
+                # 3. Biểu đồ Radar so sánh với thuốc chuẩn
+                st.subheader("So sánh với 'Thuốc vàng' Verubecestat")
+                comp_data = pd.DataFrame({
+                    "Chỉ số": ["ΔG (Affinity)", "LogP (Độ tan)", "Drug-likeness"],
+                    "Hợp chất của bạn": [abs(pred_dg)/10, v_logp/5, safety_score/100],
+                    "Verubecestat": [0.85, 0.6, 1.0]
+                })
+                st.line_chart(comp_data.set_index("Chỉ số"))
+
+        with tab_expert:
+            st.subheader("🧠 Giải thích quyết định của AI (XAI)")
             importances = model_ai.feature_importances_
-            feature_names = ['MW', 'LogP', 'HBD', 'HBA']
-            imp_df = pd.DataFrame({'Đặc trưng': feature_names, 'Trọng số': importances}).sort_values(by='Trọng số', ascending=True)
+            feature_names = ['Khối lượng (MW)', 'Độ ưa dầu (LogP)', 'H-Donor', 'H-Acceptor']
             
-            # Vẽ biểu đồ ngang cho chuyên nghiệp
-            st.bar_chart(imp_df, x='Đặc trưng', y='Trọng số', horizontal=True)
+            # Tạo biểu đồ phân bổ trọng số
+            imp_df = pd.DataFrame({'Yếu tố': feature_names, 'Mức độ ảnh hưởng': importances})
+            st.bar_chart(imp_df.set_index('Yếu tố'))
             
-            st.success(f"Dựa trên dữ liệu huấn luyện, **{imp_df.iloc[-1]['Đặc trưng']}** là yếu tố có ảnh hưởng mạnh nhất đến khả năng ức chế enzyme.")
+            st.info("""
+            **Giải thích cho Ban giám khảo:** Biểu đồ trên cho thấy mô hình Random Forest đang ưu tiên yếu tố nào 
+            để xác định lực liên kết. Điều này giúp chúng em định hướng nhóm thế hóa học khi tổng hợp dẫn xuất mới.
+            """)
 
     except Exception as e:
-        st.error(f"Lỗi hệ thống: {e}")
-        st.warning("Gia An hãy kiểm tra chắc chắn file 'AlkaLotus/alkmer_model.pkl' đã được upload lên GitHub nhé!")
+        st.error("Gia An hãy kiểm tra file .pkl trên GitHub nhé!")
