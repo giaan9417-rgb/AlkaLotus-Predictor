@@ -48,26 +48,34 @@ if 'selected_compound' not in st.session_state:
 df = get_database()
 selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
 
-# --- 4. SIDEBAR - HIỆN LOGO CHUẨN ---
+# --- 4. SIDEBAR - CĂN GIỮA TUYỆT ĐỐI ---
 import os
 
-# Tên file chính xác bạn đã upload lên cùng thư mục với app.py
 logo_filename = "Logo_HungVuong.png"
 
-# Kiểm tra file nội bộ (Cách này ổn định nhất khi đã có file trên GitHub)
-if os.path.exists(logo_filename):
-    st.sidebar.image(logo_filename, width=150) # Chỉnh width để logo vừa vặn
-    st.sidebar.markdown(
-        "<p style='text-align: center; font-size: 1.1em; font-weight: bold; margin-top: -10px; color: #2E2E2E;'>"
-        "Trường THPT Chuyên Hùng Vương</p>", 
-        unsafe_allow_html=True
-    )
-else:
-    # Nếu vẫn lỗi, dùng link dự phòng (Đây là link chuẩn từ GitHub của bạn)
-    fallback_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png"
-    st.sidebar.image(fallback_url, width=150)
-    st.sidebar.markdown("<p style='text-align: center;'>Trường THPT Chuyên Hùng Vương</p>", unsafe_allow_html=True)
+# Tạo một khối container để căn giữa mọi thứ bên trong
+st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 
+if os.path.exists(logo_filename):
+    # Hiển thị logo (giảm width xuống một chút để thanh thoát hơn)
+    st.sidebar.image(logo_filename, width=130)
+else:
+    # Link dự phòng nếu file local gặp sự cố
+    fallback_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png"
+    st.sidebar.image(fallback_url, width=130)
+
+# Dòng chữ tên trường nằm ngay dưới logo và cũng được căn giữa
+st.sidebar.markdown(
+    """
+    <p style='font-size: 1em; font-weight: bold; color: #2E2E2E; margin-top: 5px; margin-bottom: 0px;'>
+        Trường THPT Chuyên Hùng Vương
+    </p>
+    <p style='font-size: 0.8em; color: #666;'>TP. Hồ Chí Minh</p>
+    """, 
+    unsafe_allow_html=True
+)
+
+st.sidebar.markdown("</div>", unsafe_allow_html=True)
 st.sidebar.divider()
 st.sidebar.divider()
 
