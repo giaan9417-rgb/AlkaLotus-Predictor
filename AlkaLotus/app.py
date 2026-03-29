@@ -62,7 +62,7 @@ page = st.sidebar.radio("Danh mục hệ thống",
 
 st.sidebar.markdown("---")
 st.sidebar.info(f"🧬 **Đang phân tích:**\n{st.session_state.selected_compound}")
-st.sidebar.caption("Tác giả: Quách Gia An & Nguyễn Lê Bách Hợp\nLớp 10Sử - THPT Chuyên Hùng Vương")
+st.sidebar.caption("Tác giả: Quách Gia An & Nguyễn Lê Bách Hợp\nLớp 10S-K30 - THPT Chuyên Hùng Vương")
 
 # --- MODULE 1: DATABASE EXPLORER ---
 if page == "1. Thư viện Alkaloid":
@@ -119,26 +119,39 @@ elif page == "3. Phân tích & Xuất báo cáo":
         st.metric("AChE ΔG", f"{selected_data['dG_AChE']} kcal/mol", delta="-7.9 (Done)", delta_color="inverse")
         st.caption(f"Đánh giá: {classify_potential(selected_data['dG_AChE'])}")
         st.markdown('</div>', unsafe_allow_html=True)
+        
         if selected_data['BBB_Permeability']:
             st.success("✅ Có khả năng xuyên rào máu não (BBB)")
         else:
             st.error("⚠️ Khả năng xuyên rào máu não thấp")
+            
     with c2:
         st.subheader("Hồ sơ ADMET")
         fig = create_admet_radar(selected_data)
         st.plotly_chart(fig, use_container_width=True)
     
     st.markdown("---")
-    if st.button("📄 XUẤT BÁO CÁO CHI TIẾT"):
-        report = f"Tác giả: Quách Gia An - Nguyễn Lê Bách Hợp\n\nHợp chất: {selected_data['Name']}\n..."
-        st.download_button("Tải về", report, file_name=f"Report_{selected_data['Name']}.txt")
+    report_content = f"""
+==================================================
+BÁO CÁO NGHIÊN CỨU KHOA HỌC - ALKALOTUS PREDICTOR
+==================================================
+Tác giả: Quách Gia An - Nguyễn Lê Bách Hợp
+Đơn vị: Lớp 10Sử - THPT Chuyên Hùng Vương
+
+Hợp chất: {selected_data['Name']} ({selected_data['Formula']})
+[1] Hóa lý: MW: {selected_data['MW']} | LogP: {selected_data['LogP']}
+[2] Docking: BACE1: {selected_data['dG_BACE1']} | AChE: {selected_data['dG_AChE']}
+[3] BBB: {'Tốt' if selected_data['BBB_Permeability'] else 'Thấp'}
+==================================================
+"""
+    st.download_button("📄 TẢI BÁO CÁO CHI TIẾT (.TXT)", report_content, file_name=f"Report_{selected_data['Name']}.txt")
 
 # --- MODULE 4: AI PREDICTOR ---
 elif page == "4. AI Predictor (ML)":
     st.title("🤖 AI Predictor - Machine Learning Core")
-    st.markdown("<div style='background-color: #F0F2F6; padding: 15px; border-radius: 10px; border-left: 5px solid #FF69B4;'>Hệ thống sử dụng thuật toán Random Forest Regressor.</div>", unsafe_allow_html=True)
+    st.markdown("<div style='background-color: #F0F2F6; padding: 15px; border-radius: 10px; border-left: 5px solid #FF69B4;'>Dự đoán ái lực liên kết bằng thuật toán <b>Random Forest Regressor</b>.</div>", unsafe_allow_html=True)
     try:
-        model_ai = joblib.load('alkmer_model.pkl')
+        model_ai = joblib.load('AlkaLotus/alkmer_model.pkl')
         with st.container():
             st.markdown('<div class="card">', unsafe_allow_html=True)
             c1, c2 = st.columns(2)
@@ -146,10 +159,13 @@ elif page == "4. AI Predictor (ML)":
             val_logp = c2.number_input("Hệ số LogP:", value=3.0)
             val_hbd = c1.slider("Số liên kết H-Donor:", 0, 10, 1)
             val_hba = c2.slider("Số liên kết H-Acceptor:", 0, 20, 4)
-            if st.button("🔥 CHẠY DỰ ĐOÁN VỚI AI THẬT"):
+            
+            if st.button("🔥 KÍCH HOẠT DỰ ĐOÁN AI"):
                 input_data = np.array([[val_mw, val_logp, val_hbd, val_hba]])
                 res = model_ai.predict(input_data)[0]
                 st.subheader(f"Kết quả dự đoán ΔG: :red[{round(res, 2)} kcal/mol]")
+                # So sánh nhanh với thuốc đối chứng
+                st.write(f"So với Verubecestat (-8.5 kcal/mol): **{round(abs(res - (-8.5)), 2)} units**")
             st.markdown('</div>', unsafe_allow_html=True)
-    except:
-        st.error("Lỗi: Không tìm thấy file 'alkmer_model.pkl'.")
+    except Exception as e:
+        st.error(f"Lỗi: Không tìm thấy file mô hình tại 'AlkaLotus/alkmer_model.pkl'.")
