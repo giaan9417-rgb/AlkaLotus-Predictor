@@ -6,3 +6,5 @@ plotly
 joblib
 scikit-learn
 numpy
+ipywidgets
+ipython_genutils
