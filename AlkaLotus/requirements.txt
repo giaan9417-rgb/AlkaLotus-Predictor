@@ -7,3 +7,5 @@ joblib
 scikit-learn
 numpy
 fpdf
+ipywidgets
+ipython_genutils
