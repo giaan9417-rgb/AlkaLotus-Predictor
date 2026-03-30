@@ -57,21 +57,35 @@ df = get_database()
 selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
 
 # --- 4. SIDEBAR ---
-logo_filename = "Logo_HungVuong.png.png" 
+# --- 4. SIDEBAR (Cấu trúc sửa lỗi hiển thị Logo) ---
 st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 
-if os.path.exists(logo_filename):
-    st.sidebar.image(logo_filename, width=130)
-else:
-    fallback_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png.png"
-    st.sidebar.image(fallback_url, width=130)
+# 1. Thử load logo từ nhiều đường dẫn khả thi
+logo_paths = [
+    "AlkaLotus/Logo_HungVuong.png.png", 
+    "Logo_HungVuong.png.png",
+    "AlkaLotus/Logo_HungVuong.png",
+    "Logo_HungVuong.png"
+]
+
+logo_found = False
+for path in logo_paths:
+    if os.path.exists(path):
+        st.sidebar.image(path, width=130)
+        logo_found = True
+        break
+
+# 2. Nếu không tìm thấy file cục bộ, dùng link raw từ GitHub
+if not logo_found:
+    github_logo_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png.png"
+    st.sidebar.image(github_logo_url, width=130)
 
 st.sidebar.markdown(
     """
     <p style='font-size: 1em; font-weight: bold; color: #2E2E2E; margin-top: 5px; margin-bottom: 0px;'>
         Trường THPT Chuyên Hùng Vương
     </p>
-    <p style='font-size: 0.8em; color: #666;'>TP. Hồ Chí Minh</p>
+    <p style='font-size: 0.8em; color: #666;'>TP. Thủ Dầu Một - Bình Dương</p>
     """, 
     unsafe_allow_html=True
 )
