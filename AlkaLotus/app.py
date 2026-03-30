@@ -9,7 +9,7 @@ from stmol import showmol
 from data import get_database
 from utils import fetch_pdb, render_3d_molecule, check_lipinski, create_admet_radar, classify_potential
 
-# 1. Cấu hình trang
+# Cấu hình trang
 st.set_page_config(
     page_title="AlkaLotus Predictor | Alzheimer Research",
     layout="wide",
@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Giao diện CSS
+# Giao diện CSS
 st.markdown("""
     <style>
     .stApp { background-color: #FFFFFF !important; }
@@ -49,18 +49,16 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Khởi tạo dữ liệu
+# Khởi tạo dữ liệu
 if 'selected_compound' not in st.session_state:
     st.session_state.selected_compound = "Roemerine"
 
 df = get_database()
 selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
 
-# --- 4. SIDEBAR ---
-# --- 4. SIDEBAR (Cấu trúc sửa lỗi hiển thị Logo) ---
+# SIDEBAR 
 st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 
-# 1. Thử load logo từ nhiều đường dẫn khả thi
 logo_paths = [
     "AlkaLotus/Logo_HungVuong.png.png", 
     "Logo_HungVuong.png.png",
@@ -75,7 +73,6 @@ for path in logo_paths:
         logo_found = True
         break
 
-# 2. Nếu không tìm thấy file cục bộ, dùng link raw từ GitHub
 if not logo_found:
     github_logo_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png.png"
     st.sidebar.image(github_logo_url, width=130)
