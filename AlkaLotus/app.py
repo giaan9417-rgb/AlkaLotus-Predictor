@@ -108,13 +108,18 @@ st.sidebar.caption("🏫 Đơn vị: **Lớp 10-K30 - THPT Chuyên Hùng Vương
 if page == "1. Thư viện Alkaloid":
     st.title("📚 Thư viện số hóa Alkaloid")
     with st.expander("🔍 Bộ lọc sàng lọc thuốc (Lipinski Rule of 5)"):
+        # Sửa từ c1, c2 thành c1, c2, c3, c4 để hiện đủ 4 hàng
         c1, c2, c3, c4 = st.columns(4)
-        mw_f = c1.checkbox("Khối lượng (MW) < 500", value=True)
-        lp_f = c2.checkbox("Độ ưa dầu (LogP) < 5", value=True)
+        mw_f = c1.checkbox("MW < 500", value=True)
+        lp_f = c2.checkbox("LogP < 5", value=True)
+        hbd_f = c3.checkbox("H-Donor < 5", value=True)  # Thêm bộ lọc HBD
+        hba_f = c4.checkbox("H-Acceptor < 10", value=True) # Thêm bộ lọc HBA
     
     filtered_df = df.copy()
     if mw_f: filtered_df = filtered_df[filtered_df['MW'] < 500]
     if lp_f: filtered_df = filtered_df[filtered_df['LogP'] < 5]
+    if hbd_f: filtered_df = filtered_df[filtered_df['HBD'] < 5]   # Thêm logic lọc HBD
+    if hba_f: filtered_df = filtered_df[filtered_df['HBA'] < 10]  # Thêm logic lọc HBA
     
     st.dataframe(filtered_df[['Name', 'Formula', 'MW', 'LogP', 'HBD', 'HBA']], use_container_width=True)
     
