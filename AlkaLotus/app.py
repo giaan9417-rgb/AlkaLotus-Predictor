@@ -85,7 +85,7 @@ st.sidebar.markdown(
     <p style='font-size: 1em; font-weight: bold; color: #2E2E2E; margin-top: 5px; margin-bottom: 0px;'>
         Trường THPT Chuyên Hùng Vương
     </p>
-    <p style='font-size: 0.8em; color: #666;'>TP. Thủ Dầu Một - Bình Dương</p>
+    <p style='font-size: 0.8em; color: #666;'>TP. HỒ CHÍ MINH</p>
     """, 
     unsafe_allow_html=True
 )
