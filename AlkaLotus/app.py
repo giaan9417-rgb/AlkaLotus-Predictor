@@ -126,34 +126,50 @@ if page == "1. Thư viện Alkaloid":
         st.session_state.selected_compound = choice
         st.rerun()
 
-# --- MODULE 2: VIRTUAL DOCKING LAB (UPGRADED) ---
+# --- MODULE 2: VIRTUAL DOCKING LAB (AUTO-UPDATE) ---
 elif page == "2. Mô phỏng Docking 3D":
     st.title("🔬 Virtual Docking Lab (In Silico)")
     
-    # Tạo 2 Tabs: Một để xem chi tiết, một để so sánh đối chứng
+    # 1. THIẾT LẬP DATABASE (Gia An có thể thêm bao nhiêu tùy thích vào đây)
+    alkaloid_db = {
+        "Roemerine": {"dg": -7.69, "hbond": 2, "amin": "Trp286", "dist": 2.85, "stab": 85},
+        "Nuciferine": {"dg": -6.50, "hbond": 1, "amin": "Phe338", "dist": 3.72, "stab": 70},
+        "Anonaine": {"dg": -6.82, "hbond": 1, "amin": "Tyr124", "dist": 3.10, "stab": 75},
+        "Liriodenine": {"dg": -7.15, "hbond": 2, "amin": "Asp76", "dist": 2.95, "stab": 80},
+        "Pronuciferine": {"dg": -6.40, "hbond": 1, "amin": "Ser203", "dist": 3.80, "stab": 68},
+        "Asimilobine": {"dg": -6.95, "hbond": 2, "amin": "His447", "dist": 3.05, "stab": 78}
+    }
+    list_names = list(alkaloid_db.keys())
+
+    # Tạo 2 Tabs
     tab_view, tab_compare = st.tabs(["🔍 Chi tiết tương tác", "⚖️ So sánh đối chứng"])
 
     with tab_view:
         target = st.radio("Chọn Enzyme mục tiêu:", ["BACE1 (Protein 4XXS)", "AChE (Protein 7D9O)"], horizontal=True, key="view_target")
         pdb_id = "4XXS" if "BACE1" in target else "7D9O"
         
+        # Lấy hợp chất đang chọn từ Module 1 (Thư viện)
+        selected = st.session_state.selected_compound
+        if selected not in alkaloid_db: selected = "Roemerine" # Dự phòng nếu lỗi
+
         c1, c2 = st.columns([1, 2.5])
         with c1:
-            st.markdown(f"**Hợp chất:** `{st.session_state.selected_compound}`")
+            st.markdown(f"**Hợp chất:** `{selected}`")
             st.markdown(f"**Mục tiêu:** `{pdb_id}`")
             hl = st.toggle("Hiện khoang liên kết (Binding Site)", value=True, key="hl_view")
             
             st.divider()
             st.subheader("🧬 Tương tác phân tử")
-            # BẢNG PHÂN TÍCH TƯƠNG TÁC (NÂNG CẤP 2)
-            # Giả lập dữ liệu dựa trên chất đang chọn
+            
+            # ĐIỂM QUAN TRỌNG: Bảng dữ liệu lấy từ Database theo tên 'selected'
+            data = alkaloid_db[selected]
             inter_data = pd.DataFrame({
                 "Loại liên kết": ["Hydrogen Bond", "Pi-Pi Stacking", "Hydrophobic"],
-                "Acid Amin": ["Trp286", "Phe338", "Tyr124"],
-                "Khoảng cách (Å)": [2.85, 3.72, 4.10]
+                "Acid Amin": [data["amin"], "Phe338", "Tyr124"],
+                "Khoảng cách (Å)": [data["dist"], 3.72, 4.10]
             })
             st.table(inter_data)
-            st.caption("⚠️ Khoảng cách < 3.5Å cho thấy liên kết rất bền vững.")
+            st.caption(f"⚠️ Dữ liệu phân tích dựa trên cấu trúc {selected}.")
 
         with c2:
             with st.spinner("Đang dựng cấu trúc phân tử 3D..."):
@@ -165,28 +181,32 @@ elif page == "2. Mô phỏng Docking 3D":
 
     with tab_compare:
         st.subheader("⚖️ So sánh ái lực liên kết giữa các Alkaloid")
-        # CHẾ ĐỘ SO SÁNH SONG SONG (NÂNG CẤP 3)
         col_s1, col_s2 = st.columns(2)
         
         with col_s1:
-            compound_1 = st.selectbox("Chọn hợp chất 1:", ["Roemerine", "Nuciferine", "Anonaine"], index=0)
-            st.info(f"**{compound_1}**\n\nΔG dự đoán: -7.69 kcal/mol")
+            compound_1 = st.selectbox("Chọn hợp chất 1:", list_names, index=0)
+            d1 = alkaloid_db[compound_1]
+            st.info(f"**{compound_1}**\n\nΔG dự đoán: {d1['dg']} kcal/mol")
             
         with col_s2:
-            compound_2 = st.selectbox("Chọn hợp chất 2:", ["Roemerine", "Nuciferine", "Anonaine"], index=1)
-            st.warning(f"**{compound_2}**\n\nΔG dự đoán: -6.50 kcal/mol")
+            compound_2 = st.selectbox("Chọn hợp chất 2:", list_names, index=1)
+            d2 = alkaloid_db[compound_2]
+            st.warning(f"**{compound_2}**\n\nΔG dự đoán: {d2['dg']} kcal/mol")
 
-        # Biểu đồ so sánh trực quan
+        # Biểu đồ tự động cập nhật theo 2 chất đã chọn
         st.divider()
         comp_df = pd.DataFrame({
-            "Chỉ số": ["Ái lực (ΔG)", "Số liên kết Hydro", "Độ ổn định nhiệt"],
-            compound_1: [7.69, 2, 85], # Dùng giá trị tuyệt đối để vẽ biểu đồ dễ nhìn
-            compound_2: [6.50, 1, 70]
+            "Chỉ số": ["Ái lực (ΔG)", "Số liên kết Hydro", "Độ ổn định"],
+            compound_1: [abs(d1['dg']), d1['hbond'], d1['stab']],
+            compound_2: [abs(d2['dg']), d2['hbond'], d2['stab']]
         }).set_index("Chỉ số")
         
-        st.bar_chart(comp_df.T) # Vẽ biểu đồ cột ngang so sánh
+        st.bar_chart(comp_df.T)
         
-        st.success(f"📌 Nhận xét: **{compound_1}** có khả năng ức chế mạnh hơn **{compound_2}** khoảng 18%.")
+        # Tính toán nhận xét tự động
+        diff = round(abs(d1['dg'] - d2['dg']), 2)
+        stronger = compound_1 if d1['dg'] < d2['dg'] else compound_2
+        st.success(f"📌 Nhận xét: **{stronger}** vượt trội hơn về năng lượng liên kết (chênh lệch {diff} kcal/mol).")
 
 # --- MODULE 3: ANALYTICS & REPORT ---
 elif page == "3. Phân tích & Xuất báo cáo":
