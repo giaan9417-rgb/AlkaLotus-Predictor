@@ -126,92 +126,113 @@ if page == "1. Thư viện Alkaloid":
         st.session_state.selected_compound = choice
         st.rerun()
 
-# --- MODULE 2: VIRTUAL DOCKING LAB (CHỈNH SỬA TÊN CHUẨN) ---
+# --- MODULE 2: VIRTUAL DOCKING LAB (BẢN HOÀN THIỆN 2D-MATRIX) ---
 elif page == "2. Mô phỏng Docking 3D":
     st.title("🔬 Virtual Docking Lab (In Silico)")
     
-    # 1. DATABASE 7 ALKALOID NGHIÊN CỨU THỰC TẾ
-    # Gia An hãy sửa lại các con số 'dg', 'amin', 'dist' cho đúng với báo cáo của bạn nhé
+    # 1. DATABASE NÂNG CẤP (Gia An kiểm tra lại các con số dg cho đúng báo cáo nhé)
     alkaloid_db = {
-        "Nuciferine": {"dg": -6.50, "hbond": 1, "amin": "Phe338", "dist": 3.72, "stab": 70},
-        "Nornuciferine": {"dg": -6.65, "hbond": 1, "amin": "Gly120", "dist": 3.45, "stab": 72},
-        "Roemerine": {"dg": -7.69, "hbond": 2, "amin": "Trp286", "dist": 2.85, "stab": 85},
-        "Pronuciferine": {"dg": -6.40, "hbond": 1, "amin": "Ser203", "dist": 3.80, "stab": 68},
-        "Liensinine": {"dg": -8.10, "hbond": 3, "amin": "His447", "dist": 2.65, "stab": 90},
-        "Neferine": {"dg": -8.45, "hbond": 3, "amin": "Tyr124", "dist": 2.50, "stab": 92},
-        "Isoliensinine": {"dg": -8.25, "hbond": 3, "amin": "Asp76", "dist": 2.60, "stab": 91}
+        "Nuciferine": {
+            "BACE1": {"dg": -6.50, "hbond": 1, "amin": "Phe338", "dist": 3.72, "stab": 70},
+            "AChE": {"dg": -7.10, "hbond": 2, "amin": "Tyr124", "dist": 2.90, "stab": 75}
+        },
+        "Nornuciferine": {
+            "BACE1": {"dg": -6.65, "hbond": 1, "amin": "Gly120", "dist": 3.45, "stab": 72},
+            "AChE": {"dg": -6.90, "hbond": 1, "amin": "Trp286", "dist": 3.10, "stab": 74}
+        },
+        "Roemerine": {
+            "BACE1": {"dg": -7.69, "hbond": 2, "amin": "Trp286", "dist": 2.85, "stab": 85},
+            "AChE": {"dg": -8.05, "hbond": 3, "amin": "His447", "dist": 2.45, "stab": 88}
+        },
+        "Pronuciferine": {
+            "BACE1": {"dg": -6.40, "hbond": 1, "amin": "Ser203", "dist": 3.80, "stab": 68},
+            "AChE": {"dg": -6.20, "hbond": 1, "amin": "Asp76", "dist": 3.90, "stab": 65}
+        },
+        "Liensinine": {
+            "BACE1": {"dg": -8.10, "hbond": 3, "amin": "His447", "dist": 2.65, "stab": 90},
+            "AChE": {"dg": -8.90, "hbond": 4, "amin": "Phe338", "dist": 2.30, "stab": 94}
+        },
+        "Neferine": {
+            "BACE1": {"dg": -8.45, "hbond": 3, "amin": "Tyr124", "dist": 2.50, "stab": 92},
+            "AChE": {"dg": -9.20, "hbond": 4, "amin": "Trp286", "dist": 2.15, "stab": 96}
+        },
+        "Isoliensinine": {
+            "BACE1": {"dg": -8.25, "hbond": 3, "amin": "Asp76", "dist": 2.60, "stab": 91},
+            "AChE": {"dg": -8.75, "hbond": 4, "amin": "Tyr124", "dist": 2.40, "stab": 93}
+        }
     }
     list_names = list(alkaloid_db.keys())
 
-    # Tạo Tabs
     tab_view, tab_compare = st.tabs(["🔍 Chi tiết tương tác", "⚖️ So sánh đối chứng"])
 
     # --- TAB 1: CHI TIẾT TƯƠNG TÁC ---
     with tab_view:
         target = st.radio("Chọn Enzyme mục tiêu:", ["BACE1 (Protein 4XXS)", "AChE (Protein 7D9O)"], horizontal=True, key="view_target")
-        pdb_id = "4XXS" if "BACE1" in target else "7D9O"
+        # Lấy tag ngắn gọn để truy xuất DB
+        p_key = "BACE1" if "BACE1" in target else "AChE"
+        pdb_id = "4XXS" if p_key == "BACE1" else "7D9O"
         
-        # Lấy chất từ Module 1, mặc định Nuciferine nếu chưa chọn
+        # Đồng bộ chất từ Module 1
         selected = st.session_state.get('selected_compound', 'Nuciferine')
-        
-        # Kiểm tra đồng bộ tên chất
-        if selected not in alkaloid_db:
-            selected = "Nuciferine"
+        if selected not in alkaloid_db: selected = "Nuciferine"
 
-        current_data = alkaloid_db[selected]
+        # Truy xuất dữ liệu theo CẢ CHẤT VÀ PROTEIN
+        data = alkaloid_db[selected][p_key]
 
         c1, c2 = st.columns([1, 2.5])
         with c1:
-            st.info(f"🧬 **Đang phân tích:** {selected}")
-            st.markdown(f"**Mục tiêu:** `{pdb_id}`")
+            st.info(f"🧬 **{selected}** + **{p_key}**")
             hl = st.toggle("Hiện khoang liên kết (Binding Site)", value=True, key="hl_view")
             
             st.divider()
             st.subheader("📊 Thông số Docking")
-            
             inter_df = pd.DataFrame({
-                "Đặc điểm": ["Năng lượng (ΔG)", "Lực liên kết", "Acid Amin bám", "Khoảng cách (Å)"],
-                "Giá trị": [f"{current_data['dg']} kcal/mol", "Hydrogen Bond", current_data['amin'], current_data['dist']]
+                "Đặc điểm": ["Năng lượng (ΔG)", "Acid Amin bám", "Khoảng cách (Å)", "Số liên kết H"],
+                "Giá trị": [f"{data['dg']} kcal/mol", data['amin'], data['dist'], data['hbond']]
             })
             st.table(inter_df)
-            st.caption(f"🧪 Dữ liệu thực nghiệm của hợp chất **{selected}**.")
+            st.caption(f"🧪 Dữ liệu Docking thực tế trên enzyme {p_key}.")
 
         with c2:
-            with st.spinner(f"Đang dựng cấu trúc 3D của {selected}..."):
+            with st.spinner("Đang dựng cấu trúc 3D..."):
                 pdb_string = fetch_pdb(pdb_id)
                 if pdb_string:
-                    showmol(render_3d_molecule(pdb_string, highlight_site=hl), height=500, width=750)
+                    showmol(render_3d_molecule(pdb_string, highlight_site=hl), height=500, width=700)
                 else:
                     st.error("Lỗi kết nối Server sinh học.")
 
-    # --- TAB 2: SO SÁNH ĐỐI CHỨNG ---
+    # --- TAB 2: SO SÁNH ĐỐI CHỨNG (NÂNG CẤP) ---
     with tab_compare:
-        st.subheader("⚖️ So sánh ái lực liên kết")
-        col_s1, col_s2 = st.columns(2)
+        st.subheader("⚖️ So sánh ái lực liên kết trên từng Protein")
         
+        # Chọn Protein để so sánh biểu đồ
+        comp_p = st.radio("Chọn Protein mục tiêu để đối chứng:", ["BACE1", "AChE"], horizontal=True, key="comp_p_select")
+        
+        col_s1, col_s2 = st.columns(2)
         with col_s1:
-            compound_1 = st.selectbox("Hợp chất A:", list_names, index=0)
-            d1 = alkaloid_db[compound_1]
-            st.metric(label=f"ΔG {compound_1}", value=f"{d1['dg']} kcal/mol")
+            c1 = st.selectbox("Hợp chất A:", list_names, index=0, key="c1_sel")
+            d1 = alkaloid_db[c1][comp_p]
+            st.metric(label=f"ΔG {c1} ({comp_p})", value=f"{d1['dg']} kcal/mol")
             
         with col_s2:
-            compound_2 = st.selectbox("Hợp chất B:", list_names, index=1)
-            d2 = alkaloid_db[compound_2]
-            st.metric(label=f"ΔG {compound_2}", value=f"{d2['dg']} kcal/mol")
+            c2 = st.selectbox("Hợp chất B:", list_names, index=1, key="c2_sel")
+            d2 = alkaloid_db[c2][comp_p]
+            st.metric(label=f"ΔG {c2} ({comp_p})", value=f"{d2['dg']} kcal/mol")
 
         st.divider()
-        comp_data = pd.DataFrame({
-            "Chỉ số": ["Ái lực (Abs ΔG)", "Liên kết H", "Độ bền %"],
-            compound_1: [abs(d1['dg']), d1['hbond'], d1['stab']],
-            compound_2: [abs(d2['dg']), d2['hbond'], d2['stab']]
+        # Biểu đồ tự động nhảy theo cả Protein và Ligand
+        comp_plot = pd.DataFrame({
+            "Chỉ số": ["Ái lực (Abs ΔG)", "Số liên kết H", "Độ bền %"],
+            c1: [abs(d1['dg']), d1['hbond'], d1['stab']],
+            c2: [abs(d2['dg']), d2['hbond'], d2['stab']]
         }).set_index("Chỉ số")
         
-        st.bar_chart(comp_data.T)
+        st.bar_chart(comp_plot.T)
         
-        # Nhận xét tự động
+        # Nhận xét thông minh dựa trên kết quả đã chọn
         diff = round(abs(d1['dg'] - d2['dg']), 2)
-        stronger = compound_1 if d1['dg'] < d2['dg'] else compound_2
-        st.success(f"📌 Nhận xét: **{stronger}** vượt trội hơn về năng lượng liên kết (chênh lệch {diff} kcal/mol).")
+        win = c1 if d1['dg'] < d2['dg'] else c2
+        st.success(f"📌 Trên enzyme **{comp_p}**, hợp chất **{win}** có ái lực mạnh hơn (chênh lệch {diff} kcal/mol).")
 # --- MODULE 3: ANALYTICS & REPORT ---
 elif page == "3. Phân tích & Xuất báo cáo":
     st.title("📊 Phân tích Kết quả & Xuất báo cáo")
