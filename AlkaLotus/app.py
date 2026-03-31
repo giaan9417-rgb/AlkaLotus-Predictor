@@ -234,7 +234,7 @@ elif page == "4. AI Predictor (ML)":
         tab_main, tab_expert = st.tabs(["🎯 Dự đoán & Đánh giá", "🧠 Phân tích XAI Chuyên sâu"])
         
         with tab_main:
-    c1, c2 = st.columns([2, 1])
+        c1, c2 = st.columns([2, 1])
     with c1:
         st.markdown('<div class="card">', unsafe_allow_html=True)
         # Đặt tên biến rõ ràng: mw, logp, hbd, hba
