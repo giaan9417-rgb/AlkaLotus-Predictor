@@ -256,12 +256,17 @@ elif page == "4. AI Predictor (ML)":
                     
                     # --- PHẦN LOGIC ĐÃ CHỈNH THRESHOLD -7.5 VÀ THỤT LỀ CHUẨN ---
                     if safety_score < 75:
-                        st.error("Kém khả thi (Drug-likeness thấp) ⚠️")
-                    elif pred_dg <= -8.0: # Nâng lên lại -8.0 để loại các chất tầm trung như -7.59
-                        st.success("Tiềm năng rất cao 🌟")
-                        st.balloons()
+                        st.error("### 🛑 KÉM KHẢ THI") 
+                        st.snow()
+                        st.warning("Vi phạm quy tắc Lipinski trầm trọng!")
+                        
+                    elif pred_dg <= -8.0:
+                        st.success("### 🌟 TIỀM NĂNG RẤT CAO")
+                        st.balloons() # Hiệu ứng bóng bay ăn mừng
+                        
                     else:
-                        st.info("Cần tối ưu thêm cấu trúc")
+                        st.info("### 🧪 CẦN TỐI ƯU THÊM")
+                        st.markdown("⚠️ *Ái lực liên kết chưa đạt ngưỡng kỳ vọng.*")
                     
                     st.subheader("So sánh đối chứng")
                     comp_data = pd.DataFrame({
