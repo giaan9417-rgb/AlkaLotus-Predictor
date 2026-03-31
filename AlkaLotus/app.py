@@ -256,13 +256,14 @@ elif page == "4. AI Predictor (ML)":
                     st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
                     st.metric("Drug-likeness", f"{safety_score}%")
                     
-                    if safety_score < 75:
-                        st.error("Kém khả thi (Drug-likeness thấp) ⚠️")
-                    elif pred_dg < -8.0:
-                        st.success("Tiềm năng rất cao 🌟")
-                        st.balloons()
-                    else:
-                        st.info("Cần tối ưu thêm cấu trúc")
+# --- PHẦN LOGIC HIỂN THỊ TRONG C2 ---
+if safety_score < 75:
+    st.error("Kém khả thi (Drug-likeness thấp) ⚠️")
+elif pred_dg <= -7.5: # Đổi từ -8.0 thành -7.5 để khớp với kết quả Roemerine
+    st.success("Tiềm năng rất cao 🌟")
+    st.balloons()
+else:
+    st.info("Cần tối ưu thêm cấu trúc")
                     
                     st.subheader("So sánh đối chứng")
                     comp_data = pd.DataFrame({
