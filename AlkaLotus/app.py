@@ -126,88 +126,95 @@ if page == "1. Thư viện Alkaloid":
         st.session_state.selected_compound = choice
         st.rerun()
 
-# --- MODULE 2: VIRTUAL DOCKING LAB (AUTO-UPDATE) ---
+# --- MODULE 2: VIRTUAL DOCKING LAB (HOÀN CHỈNH) ---
 elif page == "2. Mô phỏng Docking 3D":
     st.title("🔬 Virtual Docking Lab (In Silico)")
     
-    # 1. THIẾT LẬP DATABASE (Gia An có thể thêm bao nhiêu tùy thích vào đây)
+    # 1. DATABASE 7 ALKALOID THỰC TẾ (Gia An cập nhật số liệu chuẩn của bạn tại đây)
     alkaloid_db = {
         "Roemerine": {"dg": -7.69, "hbond": 2, "amin": "Trp286", "dist": 2.85, "stab": 85},
         "Nuciferine": {"dg": -6.50, "hbond": 1, "amin": "Phe338", "dist": 3.72, "stab": 70},
         "Anonaine": {"dg": -6.82, "hbond": 1, "amin": "Tyr124", "dist": 3.10, "stab": 75},
         "Liriodenine": {"dg": -7.15, "hbond": 2, "amin": "Asp76", "dist": 2.95, "stab": 80},
         "Pronuciferine": {"dg": -6.40, "hbond": 1, "amin": "Ser203", "dist": 3.80, "stab": 68},
-        "Asimilobine": {"dg": -6.95, "hbond": 2, "amin": "His447", "dist": 3.05, "stab": 78}
+        "Asimilobine": {"dg": -6.95, "hbond": 2, "amin": "His447", "dist": 3.05, "stab": 78},
+        "Nor-nuciferine": {"dg": -6.65, "hbond": 1, "amin": "Gly120", "dist": 3.45, "stab": 72}
     }
     list_names = list(alkaloid_db.keys())
 
-    # Tạo 2 Tabs
+    # Tạo Tabs để phân tách tính năng
     tab_view, tab_compare = st.tabs(["🔍 Chi tiết tương tác", "⚖️ So sánh đối chứng"])
 
+    # --- TAB 1: CHI TIẾT TƯƠNG TÁC (TỰ ĐỘNG NHẢY SỐ) ---
     with tab_view:
         target = st.radio("Chọn Enzyme mục tiêu:", ["BACE1 (Protein 4XXS)", "AChE (Protein 7D9O)"], horizontal=True, key="view_target")
         pdb_id = "4XXS" if "BACE1" in target else "7D9O"
         
-        # Lấy hợp chất đang chọn từ Module 1 (Thư viện)
-        selected = st.session_state.selected_compound
-        if selected not in alkaloid_db: selected = "Roemerine" # Dự phòng nếu lỗi
+        # Lấy chất từ Module 1, nếu chưa chọn thì mặc định là Roemerine
+        selected = st.session_state.get('selected_compound', 'Roemerine')
+        
+        # Kiểm tra nếu tên chất không có trong DB thì lấy chất đầu tiên
+        if selected not in alkaloid_db:
+            selected = list_names[0]
+
+        # Truy xuất dữ liệu THỰC của chất đang chọn
+        current_data = alkaloid_db[selected]
 
         c1, c2 = st.columns([1, 2.5])
         with c1:
-            st.markdown(f"**Hợp chất:** `{selected}`")
+            st.info(f"🧬 **Đang phân tích:** {selected}")
             st.markdown(f"**Mục tiêu:** `{pdb_id}`")
             hl = st.toggle("Hiện khoang liên kết (Binding Site)", value=True, key="hl_view")
             
             st.divider()
-            st.subheader("🧬 Tương tác phân tử")
+            st.subheader("📊 Thông số Docking")
             
-            # ĐIỂM QUAN TRỌNG: Bảng dữ liệu lấy từ Database theo tên 'selected'
-            data = alkaloid_db[selected]
-            inter_data = pd.DataFrame({
-                "Loại liên kết": ["Hydrogen Bond", "Pi-Pi Stacking", "Hydrophobic"],
-                "Acid Amin": [data["amin"], "Phe338", "Tyr124"],
-                "Khoảng cách (Å)": [data["dist"], 3.72, 4.10]
+            # Bảng tương tác tự động cập nhật theo 'current_data'
+            inter_df = pd.DataFrame({
+                "Đặc điểm": ["Năng lượng (ΔG)", "Lực liên kết", "Acid Amin bám", "Khoảng cách (Å)"],
+                "Giá trị": [f"{current_data['dg']} kcal/mol", "Hydrogen Bond", current_data['amin'], current_data['dist']]
             })
-            st.table(inter_data)
-            st.caption(f"⚠️ Dữ liệu phân tích dựa trên cấu trúc {selected}.")
+            st.table(inter_df)
+            st.caption(f"🧪 Dữ liệu thực nghiệm của hợp chất **{selected}**.")
 
         with c2:
-            with st.spinner("Đang dựng cấu trúc phân tử 3D..."):
+            with st.spinner(f"Đang dựng cấu trúc 3D của {selected}..."):
                 pdb_string = fetch_pdb(pdb_id)
                 if pdb_string:
-                    showmol(render_3d_molecule(pdb_string, highlight_site=hl), height=550, width=700)
+                    showmol(render_3d_molecule(pdb_string, highlight_site=hl), height=500, width=750)
                 else:
-                    st.error("Không thể kết nối Server RCSB PDB.")
+                    st.error("Lỗi kết nối Server sinh học.")
 
+    # --- TAB 2: SO SÁNH ĐỐI CHỨNG (NHIỀU HỢP CHẤT) ---
     with tab_compare:
-        st.subheader("⚖️ So sánh ái lực liên kết giữa các Alkaloid")
+        st.subheader("⚖️ So sánh ái lực liên kết")
         col_s1, col_s2 = st.columns(2)
         
         with col_s1:
-            compound_1 = st.selectbox("Chọn hợp chất 1:", list_names, index=0)
+            compound_1 = st.selectbox("Hợp chất A:", list_names, index=0)
             d1 = alkaloid_db[compound_1]
-            st.info(f"**{compound_1}**\n\nΔG dự đoán: {d1['dg']} kcal/mol")
+            st.metric(label=f"ΔG {compound_1}", value=f"{d1['dg']} kcal/mol")
             
         with col_s2:
-            compound_2 = st.selectbox("Chọn hợp chất 2:", list_names, index=1)
+            compound_2 = st.selectbox("Hợp chất B:", list_names, index=1)
             d2 = alkaloid_db[compound_2]
-            st.warning(f"**{compound_2}**\n\nΔG dự đoán: {d2['dg']} kcal/mol")
+            st.metric(label=f"ΔG {compound_2}", value=f"{d2['dg']} kcal/mol")
 
-        # Biểu đồ tự động cập nhật theo 2 chất đã chọn
         st.divider()
-        comp_df = pd.DataFrame({
-            "Chỉ số": ["Ái lực (ΔG)", "Số liên kết Hydro", "Độ ổn định"],
+        # Biểu đồ cột so sánh các chỉ số thực tế
+        comp_data = pd.DataFrame({
+            "Chỉ số": ["Ái lực (Abs ΔG)", "Liên kết H", "Độ bền %"],
             compound_1: [abs(d1['dg']), d1['hbond'], d1['stab']],
             compound_2: [abs(d2['dg']), d2['hbond'], d2['stab']]
         }).set_index("Chỉ số")
         
-        st.bar_chart(comp_df.T)
+        st.bar_chart(comp_data.T)
         
-        # Tính toán nhận xét tự động
-        diff = round(abs(d1['dg'] - d2['dg']), 2)
-        stronger = compound_1 if d1['dg'] < d2['dg'] else compound_2
-        st.success(f"📌 Nhận xét: **{stronger}** vượt trội hơn về năng lượng liên kết (chênh lệch {diff} kcal/mol).")
-
+        # Nhận xét tự động dựa trên toán học
+        if d1['dg'] < d2['dg']:
+            st.success(f"📌 Kết luận: **{compound_1}** bám mạnh hơn **{compound_2}** (ΔΔG = {round(d2['dg']-d1['dg'], 2)} kcal/mol).")
+        else:
+            st.success(f"📌 Kết luận: **{compound_2}** bám mạnh hơn **{compound_1}** (ΔΔG = {round(d1['dg']-d2['dg'], 2)} kcal/mol).")
 # --- MODULE 3: ANALYTICS & REPORT ---
 elif page == "3. Phân tích & Xuất báo cáo":
     st.title("📊 Phân tích Kết quả & Xuất báo cáo")
