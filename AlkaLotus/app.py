@@ -234,32 +234,39 @@ elif page == "4. AI Predictor (ML)":
         tab_main, tab_expert = st.tabs(["🎯 Dự đoán & Đánh giá", "🧠 Phân tích XAI Chuyên sâu"])
         
         with tab_main:
-            c1, c2 = st.columns([2, 1])
-            with c1:
-                st.markdown('<div class="card">', unsafe_allow_html=True)
-                v_mw = st.number_input("Khối lượng (MW):", 100.0, 1000.0, 311.40)
-                v_logp = st.number_input("LogP (Lipophilicity):", -2.0, 10.0, 3.00)
-                v_hbd = st.slider("H-Donor:", 0, 12, 1)
-                v_hba = st.slider("H-Acceptor:", 0, 20, 5)
-                btn_analyze = st.button("⚡ CHẠY PHÂN TÍCH HỆ THỐNG")
-                st.markdown('</div>', unsafe_allow_html=True)
-                
-            if btn_analyze:
-                progress_bar = st.progress(0)
-                for i in range(1, 101):
-                    progress_bar.progress(i)
-                    time.sleep(0.005)
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        st.markdown('<div class="card">', unsafe_allow_html=True)
+        # Đặt tên biến rõ ràng: mw, logp, hbd, hba
+        mw = st.number_input("Khối lượng (MW):", 100.0, 1000.0, 311.40)
+        logp = st.number_input("LogP (Lipophilicity):", -2.0, 10.0, 3.00)
+        hbd = st.slider("H-Donor:", 0, 12, 1)
+        hba = st.slider("H-Acceptor:", 0, 20, 5)
+        btn_analyze = st.button("⚡ CHẠY PHÂN TÍCH HỆ THỐNG")
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+    if btn_analyze:
+        # TRUYỀN ĐÚNG BIẾN mw, logp... VÀO ĐÂY
+        features = np.array([[mw, logp, hbd, hba]])
+        pred_dg = model_ai.predict(features)[0]
+        
+        # Tính toán vi phạm dựa trên giá trị MỚI NHẬP
+        violations = sum([mw > 500, logp > 5, hbd > 5, hba > 10])
+        safety_score = 100 - (violations * 25)
 
-                features = np.array([[v_mw, v_logp, v_hbd, v_hba]])
-                pred_dg = model_ai.predict(features)[0]
-                violations = sum([v_mw > 500, v_logp > 5, v_hbd > 5, v_hba > 10])
-                safety_score = 100 - (violations * 25)
-
-                with c2:
-                    st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
-                    st.metric("Drug-likeness", f"{safety_score}%")
-                    if pred_dg < -8.0: st.success("Tiềm năng rất cao 🌟")
-                    else: st.info("Cần tối ưu thêm cấu trúc")
+        with c2:
+            st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
+            st.metric("Drug-likeness", f"{safety_score}%")
+            
+            # --- PHẦN LOGIC QUAN TRỌNG NHẤT ---
+            if safety_score < 75:
+                st.error("Kém khả thi (Drug-likeness thấp) ⚠️")
+                st.info("Cấu trúc vi phạm quy tắc Lipinski, khó hấp thụ.")
+            elif pred_dg < -8.0:
+                st.success("Tiềm năng rất cao 🌟")
+                st.balloons()
+            else:
+                st.info("Cần tối ưu thêm cấu trúc")
                     
                 st.subheader("So sánh với 'Thuốc vàng' Verubecestat")
                 comp_data = pd.DataFrame({
