@@ -223,7 +223,6 @@ IV. DƯỢC ĐỘNG HỌC & ĐỘ AN TOÀN (ADMET)
         "Nguồn": ["PMID: 25442253", "PMID: 25442253", "PMID: 25442253", "Elsevier 2015"]
     }
     st.table(pd.DataFrame(real_data))
-
 # --- MODULE 4: AI PREDICTOR (NÂNG CẤP XAI CHUYÊN SÂU) ---
 elif page == "4. AI Predictor (ML)":
     st.title("🛡️ AI Research Expert - Molecular Screening")
@@ -234,52 +233,47 @@ elif page == "4. AI Predictor (ML)":
         tab_main, tab_expert = st.tabs(["🎯 Dự đoán & Đánh giá", "🧠 Phân tích XAI Chuyên sâu"])
         
         with tab_main:
-         c1, c2 = st.columns([2, 1])
-    with c1:
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-        # Đặt tên biến rõ ràng: mw, logp, hbd, hba
-        mw = st.number_input("Khối lượng (MW):", 100.0, 1000.0, 311.40)
-        logp = st.number_input("LogP (Lipophilicity):", -2.0, 10.0, 3.00)
-        hbd = st.slider("H-Donor:", 0, 12, 1)
-        hba = st.slider("H-Acceptor:", 0, 20, 5)
-        btn_analyze = st.button("⚡ CHẠY PHÂN TÍCH HỆ THỐNG")
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-    if btn_analyze:
-        # TRUYỀN ĐÚNG BIẾN mw, logp... VÀO ĐÂY
-        features = np.array([[mw, logp, hbd, hba]])
-        pred_dg = model_ai.predict(features)[0]
-        
-        # Tính toán vi phạm dựa trên giá trị MỚI NHẬP
-        violations = sum([mw > 500, logp > 5, hbd > 5, hba > 10])
-        safety_score = 100 - (violations * 25)
-
-        with c2:
-            st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
-            st.metric("Drug-likeness", f"{safety_score}%")
+            c1, c2 = st.columns([2, 1])
+            with c1:
+                st.markdown('<div class="card">', unsafe_allow_html=True)
+                # Sử dụng biến mw, logp để AI đọc đúng dữ liệu nhập
+                mw = st.number_input("Khối lượng (MW):", 100.0, 1000.0, 311.40)
+                logp = st.number_input("LogP (Lipophilicity):", -2.0, 10.0, 3.00)
+                hbd = st.slider("H-Donor:", 0, 12, 1)
+                hba = st.slider("H-Acceptor:", 0, 20, 5)
+                btn_analyze = st.button("⚡ CHẠY PHÂN TÍCH HỆ THỐNG")
+                st.markdown('</div>', unsafe_allow_html=True)
             
-            # --- PHẦN LOGIC QUAN TRỌNG NHẤT ---
-            if safety_score < 75:
-                st.error("Kém khả thi (Drug-likeness thấp) ⚠️")
-                st.info("Cấu trúc vi phạm quy tắc Lipinski, khó hấp thụ.")
-            elif pred_dg < -8.0:
-                st.success("Tiềm năng rất cao 🌟")
-                st.balloons()
-            else:
-                st.info("Cần tối ưu thêm cấu trúc")
+            # Khối lệnh xử lý kết quả PHẢI nằm trong tab_main
+            if btn_analyze:
+                features = np.array([[mw, logp, hbd, hba]])
+                pred_dg = model_ai.predict(features)[0]
+                
+                violations = sum([mw > 500, logp > 5, hbd > 5, hba > 10])
+                safety_score = 100 - (violations * 25)
+
+                with c2:
+                    st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
+                    st.metric("Drug-likeness", f"{safety_score}%")
                     
-                st.subheader("So sánh với 'Thuốc vàng' Verubecestat")
-                comp_data = pd.DataFrame({
-                    "Chỉ số": ["ΔG (Affinity)", "LogP", "Drug-likeness"],
-                    "Hợp chất của bạn": [abs(pred_dg)/10, v_logp/5, safety_score/100],
-                    "Verubecestat": [0.85, 0.6, 1.0]
-                })
-                st.line_chart(comp_data.set_index("Chỉ số"))
+                    if safety_score < 75:
+                        st.error("Kém khả thi (Drug-likeness thấp) ⚠️")
+                    elif pred_dg < -8.0:
+                        st.success("Tiềm năng rất cao 🌟")
+                        st.balloons()
+                    else:
+                        st.info("Cần tối ưu thêm cấu trúc")
+                    
+                    st.subheader("So sánh đối chứng")
+                    comp_data = pd.DataFrame({
+                        "Chỉ số": ["ΔG (Affinity)", "LogP", "Drug-likeness"],
+                        "Hợp chất của bạn": [abs(pred_dg)/10, logp/5, safety_score/100],
+                        "Verubecestat": [0.85, 0.6, 1.0]
+                    })
+                    st.line_chart(comp_data.set_index("Chỉ số"))
 
         with tab_expert:
             st.subheader("🔬 Giải thích cơ chế dự đoán (Feature Importance)")
-            
-            # 1. Trực quan hóa Feature Importance bằng Plotly
             importances = model_ai.feature_importances_
             labels = ['Molecular Weight', 'Lipophilicity (LogP)', 'H-Donor', 'H-Acceptor']
             imp_df = pd.DataFrame({'Yếu tố': labels, 'Mức độ ảnh hưởng (%)': importances * 100}).sort_values('Mức độ ảnh hưởng (%)')
@@ -289,19 +283,13 @@ elif page == "4. AI Predictor (ML)":
                              title="Tỷ trọng đóng góp của các chỉ số vào kết quả ΔG")
             st.plotly_chart(fig_xai, use_container_width=True)
 
-            # 2. Nhận xét chuyên sâu
             top_feat = imp_df.iloc[-1]['Yếu tố']
             st.markdown(f"""
             <div class='card'>
             <b>📌 Nhận định khoa học từ AI:</b><br>
-            Mô hình xác định <b>{top_feat}</b> là biến số quan trọng nhất ảnh hưởng đến ái lực liên kết. 
-            Trong hóa tin học, điều này chứng minh rằng cấu trúc không gian và tính tan của hợp chất 
-            từ lá sen đóng vai trò tiên quyết trong việc ức chế enzyme mục tiêu.
+            Mô hình xác định <b>{top_feat}</b> là biến số quan trọng nhất ảnh hưởng đến ái lực liên kết.
             </div>
             """, unsafe_allow_html=True)
-            
-            # 3. Phân tích phân bổ dự đoán (Prediction Distribution)
-            st.info("💡 **Dành cho nghiên cứu:** Các yếu tố có trọng số cao hơn cần được ưu tiên tối ưu hóa hóa học để tăng cường dược tính.")
 
     except Exception as e:
         st.error(f"Lỗi hệ thống AI: {e}")
