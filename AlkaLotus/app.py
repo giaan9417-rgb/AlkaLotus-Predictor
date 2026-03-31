@@ -236,7 +236,6 @@ elif page == "4. AI Predictor (ML)":
             c1, c2 = st.columns([2, 1])
             with c1:
                 st.markdown('<div class="card">', unsafe_allow_html=True)
-                # Sử dụng biến mw, logp để AI đọc đúng dữ liệu nhập
                 mw = st.number_input("Khối lượng (MW):", 100.0, 1000.0, 311.40)
                 logp = st.number_input("LogP (Lipophilicity):", -2.0, 10.0, 3.00)
                 hbd = st.slider("H-Donor:", 0, 12, 1)
@@ -244,7 +243,6 @@ elif page == "4. AI Predictor (ML)":
                 btn_analyze = st.button("⚡ CHẠY PHÂN TÍCH HỆ THỐNG")
                 st.markdown('</div>', unsafe_allow_html=True)
             
-            # Khối lệnh xử lý kết quả PHẢI nằm trong tab_main
             if btn_analyze:
                 features = np.array([[mw, logp, hbd, hba]])
                 pred_dg = model_ai.predict(features)[0]
@@ -256,14 +254,14 @@ elif page == "4. AI Predictor (ML)":
                     st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
                     st.metric("Drug-likeness", f"{safety_score}%")
                     
-# --- PHẦN LOGIC HIỂN THỊ TRONG C2 ---
-if safety_score < 75:
-    st.error("Kém khả thi (Drug-likeness thấp) ⚠️")
-elif pred_dg <= -7.5: # Đổi từ -8.0 thành -7.5 để khớp với kết quả Roemerine
-    st.success("Tiềm năng rất cao 🌟")
-    st.balloons()
-else:
-    st.info("Cần tối ưu thêm cấu trúc")
+                    # --- PHẦN LOGIC ĐÃ CHỈNH THRESHOLD -7.5 VÀ THỤT LỀ CHUẨN ---
+                    if safety_score < 75:
+                        st.error("Kém khả thi (Drug-likeness thấp) ⚠️")
+                    elif pred_dg <= -7.5: 
+                        st.success("Tiềm năng rất cao 🌟")
+                        st.balloons()
+                    else:
+                        st.info("Cần tối ưu thêm cấu trúc")
                     
                     st.subheader("So sánh đối chứng")
                     comp_data = pd.DataFrame({
