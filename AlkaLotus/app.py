@@ -257,7 +257,7 @@ elif page == "4. AI Predictor (ML)":
                     # --- PHẦN LOGIC ĐÃ CHỈNH THRESHOLD -7.5 VÀ THỤT LỀ CHUẨN ---
                     if safety_score < 75:
                         st.error("Kém khả thi (Drug-likeness thấp) ⚠️")
-                    elif pred_dg <= -7.5: 
+                    elif pred_dg <= -8.0: # Nâng lên lại -8.0 để loại các chất tầm trung như -7.59
                         st.success("Tiềm năng rất cao 🌟")
                         st.balloons()
                     else:
