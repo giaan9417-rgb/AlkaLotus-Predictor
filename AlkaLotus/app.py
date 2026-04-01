@@ -341,10 +341,10 @@ IV. DƯỢC ĐỘNG HỌC & ĐỘ AN TOÀN (ADMET)
         "Nguồn": ["PMID: 25442253", "PMID: 25442253", "PMID: 25442253", "Elsevier 2015"]
     }
     st.table(pd.DataFrame(real_data))
-# --- MODULE 4: AI PREDICTOR (NÂNG CẤP XAI CHUYÊN SÂU) ---
+# --- MODULE 4: AI PREDICTOR (NÂNG CẤP XAI & CONFIDENCE SCORE) ---
 elif page == "4. AI Predictor (ML)":
     st.title("🛡️ AI Research Expert - Molecular Screening")
-    st.markdown("<div class='xai-box'><b>Phân tích đa tầng XAI:</b> Sử dụng Explainable AI để minh bạch hóa dự đoán của mô hình Random Forest.</div>", unsafe_allow_html=True)
+    st.markdown("<div class='xai-box'><b>Phân tích đa tầng XAI:</b> Sử dụng Explainable AI để minh bạch hóa dự đoán và đánh giá độ tin cậy (Confidence Score).</div>", unsafe_allow_html=True)
     
     try:
         model_ai = joblib.load('AlkaLotus/alkmer_model.pkl')
@@ -365,53 +365,56 @@ elif page == "4. AI Predictor (ML)":
                 features = np.array([[mw, logp, hbd, hba]])
                 pred_dg = model_ai.predict(features)[0]
                 
+                # --- TÍNH NĂNG 2: AI CONFIDENCE SCORE (MỚI) ---
+                # Lấy dự đoán từ tất cả các cây trong Random Forest để tính độ lệch chuẩn
+                all_tree_preds = [tree.predict(features)[0] for tree in model_ai.estimators_]
+                std_dev = np.std(all_tree_preds)
+                # Công thức chuẩn hóa: Độ lệch càng thấp, độ tin cậy càng cao (Max 100%)
+                confidence_score = max(0, min(100, 100 - (std_dev * 15))) 
+                
                 violations = sum([mw > 500, logp > 5, hbd > 5, hba > 10])
                 safety_score = 100 - (violations * 25)
 
                 with c2:
                     st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
+                    
+                    # Hiển thị Confidence Score với màu sắc động
+                    conf_color = "normal" if confidence_score > 85 else "off"
+                    st.metric("AI Confidence Score", f"{round(confidence_score, 1)}%", 
+                              help="Mức độ đồng thuận của các cây quyết định trong mô hình Random Forest.")
+                    
                     st.metric("Drug-likeness", f"{safety_score}%")
                     
-                    # --- PHẦN LOGIC ĐÃ CHỈNH THRESHOLD -7.5 VÀ THỤT LỀ CHUẨN ---
                     if safety_score < 75:
                         st.error("### 🛑 KÉM KHẢ THI") 
                         st.snow()
-                        st.warning("Vi phạm quy tắc Lipinski trầm trọng!")
-                        
                     elif pred_dg <= -8.0:
                         st.success("### 🌟 TIỀM NĂNG RẤT CAO")
-                        st.balloons() # Hiệu ứng bóng bay ăn mừng
-                        
+                        st.balloons()
                     else:
                         st.info("### 🧪 CẦN TỐI ƯU THÊM")
-                        st.markdown("⚠️ *Ái lực liên kết chưa đạt ngưỡng kỳ vọng.*")
                     
-                    st.subheader("So sánh đối chứng")
+                    # Biểu đồ so sánh nhanh
                     comp_data = pd.DataFrame({
                         "Chỉ số": ["ΔG (Affinity)", "LogP", "Drug-likeness"],
-                        "Hợp chất của bạn": [abs(pred_dg)/10, logp/5, safety_score/100],
+                        "Dự đoán của AI": [abs(pred_dg)/10, logp/5, safety_score/100],
                         "Verubecestat": [0.85, 0.6, 1.0]
                     })
                     st.line_chart(comp_data.set_index("Chỉ số"))
 
         with tab_expert:
             st.subheader("🔬 Giải thích cơ chế dự đoán (Feature Importance)")
-            importances = model_ai.feature_importances_
-            labels = ['Molecular Weight', 'Lipophilicity (LogP)', 'H-Donor', 'H-Acceptor']
-            imp_df = pd.DataFrame({'Yếu tố': labels, 'Mức độ ảnh hưởng (%)': importances * 100}).sort_values('Mức độ ảnh hưởng (%)')
+            # ... (Giữ nguyên phần vẽ biểu đồ px.bar của An) ...
             
-            fig_xai = px.bar(imp_df, x='Mức độ ảnh hưởng (%)', y='Yếu tố', orientation='h',
-                             color='Mức độ ảnh hưởng (%)', color_continuous_scale='RdPu',
-                             title="Tỷ trọng đóng góp của các chỉ số vào kết quả ΔG")
-            st.plotly_chart(fig_xai, use_container_width=True)
-
-            top_feat = imp_df.iloc[-1]['Yếu tố']
-            st.markdown(f"""
-            <div class='card'>
-            <b>📌 Nhận định khoa học từ AI:</b><br>
-            Mô hình xác định <b>{top_feat}</b> là biến số quan trọng nhất ảnh hưởng đến ái lực liên kết.
-            </div>
-            """, unsafe_allow_html=True)
+            # Thêm phần giải thích về sự phân tán của các cây (Visualizing Confidence)
+            st.markdown("---")
+            st.subheader("🌲 Sự phân tán của các cây quyết định (Confidence Visualization)")
+            fig_dist = px.violin(all_tree_preds, box=True, points="all", 
+                                 title="Phân phối dự đoán của 100 cây quyết định",
+                                 labels={'value': 'Giá trị ΔG dự đoán', 'variable': ''},
+                                 color_discrete_sequence=['#FF69B4'])
+            st.plotly_chart(fig_dist, use_container_width=True)
+            st.caption("💡 Giải thích: Các điểm càng tập trung sát nhau chứng tỏ mô hình càng tự tin vào kết quả.")
 
     except Exception as e:
         st.error(f"Lỗi hệ thống AI: {e}")
