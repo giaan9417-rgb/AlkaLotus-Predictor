@@ -341,13 +341,18 @@ IV. DƯỢC ĐỘNG HỌC & ĐỘ AN TOÀN (ADMET)
         "Nguồn": ["PMID: 25442253", "PMID: 25442253", "PMID: 25442253", "Elsevier 2015"]
     }
     st.table(pd.DataFrame(real_data))
-# --- MODULE 4: AI PREDICTOR (NÂNG CẤP XAI & CONFIDENCE SCORE) ---
+# --- MODULE 4: AI PREDICTOR (BẢN FIX LỖI NOT DEFINED) ---
 elif page == "4. AI Predictor (ML)":
     st.title("🛡️ AI Research Expert - Molecular Screening")
-    st.markdown("<div class='xai-box'><b>Phân tích đa tầng XAI:</b> Sử dụng Explainable AI để minh bạch hóa dự đoán và đánh giá độ tin cậy (Confidence Score).</div>", unsafe_allow_html=True)
+    st.markdown("<div class='xai-box'><b>Phân tích đa tầng XAI:</b> Sử dụng Explainable AI để minh bạch hóa dự đoán và đánh giá độ tin cậy.</div>", unsafe_allow_html=True)
     
     try:
         model_ai = joblib.load('AlkaLotus/alkmer_model.pkl')
+        
+        # 1. KHỞI TẠO BIẾN TẠI ĐÂY ĐỂ TRÁNH LỖI "NOT DEFINED"
+        if 'last_preds' not in st.session_state:
+            st.session_state.last_preds = None
+
         tab_main, tab_expert = st.tabs(["🎯 Dự đoán & Đánh giá", "🧠 Phân tích XAI Chuyên sâu"])
         
         with tab_main:
@@ -365,11 +370,11 @@ elif page == "4. AI Predictor (ML)":
                 features = np.array([[mw, logp, hbd, hba]])
                 pred_dg = model_ai.predict(features)[0]
                 
-                # --- TÍNH NĂNG 2: AI CONFIDENCE SCORE (MỚI) ---
-                # Lấy dự đoán từ tất cả các cây trong Random Forest để tính độ lệch chuẩn
+                # TÍNH TOÁN VÀ LƯU VÀO SESSION STATE
                 all_tree_preds = [tree.predict(features)[0] for tree in model_ai.estimators_]
+                st.session_state.last_preds = all_tree_preds # Lưu lại để tab Expert dùng
+                
                 std_dev = np.std(all_tree_preds)
-                # Công thức chuẩn hóa: Độ lệch càng thấp, độ tin cậy càng cao (Max 100%)
                 confidence_score = max(0, min(100, 100 - (std_dev * 15))) 
                 
                 violations = sum([mw > 500, logp > 5, hbd > 5, hba > 10])
@@ -377,44 +382,34 @@ elif page == "4. AI Predictor (ML)":
 
                 with c2:
                     st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
-                    
-                    # Hiển thị Confidence Score với màu sắc động
-                    conf_color = "normal" if confidence_score > 85 else "off"
-                    st.metric("AI Confidence Score", f"{round(confidence_score, 1)}%", 
-                              help="Mức độ đồng thuận của các cây quyết định trong mô hình Random Forest.")
-                    
+                    st.metric("AI Confidence Score", f"{round(confidence_score, 1)}%")
                     st.metric("Drug-likeness", f"{safety_score}%")
                     
                     if safety_score < 75:
                         st.error("### 🛑 KÉM KHẢ THI") 
-                        st.snow()
                     elif pred_dg <= -8.0:
                         st.success("### 🌟 TIỀM NĂNG RẤT CAO")
                         st.balloons()
                     else:
                         st.info("### 🧪 CẦN TỐI ƯU THÊM")
-                    
-                    # Biểu đồ so sánh nhanh
-                    comp_data = pd.DataFrame({
-                        "Chỉ số": ["ΔG (Affinity)", "LogP", "Drug-likeness"],
-                        "Dự đoán của AI": [abs(pred_dg)/10, logp/5, safety_score/100],
-                        "Verubecestat": [0.85, 0.6, 1.0]
-                    })
-                    st.line_chart(comp_data.set_index("Chỉ số"))
 
         with tab_expert:
             st.subheader("🔬 Giải thích cơ chế dự đoán (Feature Importance)")
-            # ... (Giữ nguyên phần vẽ biểu đồ px.bar của An) ...
-            
-            # Thêm phần giải thích về sự phân tán của các cây (Visualizing Confidence)
-            st.markdown("---")
+            # Phần vẽ biểu đồ Feature Importance (Giữ nguyên của An)
+            importances = model_ai.feature_importances_
+            labels = ['MW', 'LogP', 'H-Donor', 'H-Acceptor']
+            imp_df = pd.DataFrame({'Yếu tố': labels, 'Mức độ ảnh hưởng (%)': importances * 100})
+            fig_xai = px.bar(imp_df, x='Mức độ ảnh hưởng (%)', y='Yếu tố', orientation='h', color_discrete_sequence=['#FF69B4'])
+            st.plotly_chart(fig_xai, use_container_width=True)
+
+            # KIỂM TRA NẾU ĐÃ CÓ DỮ LIỆU DỰ ĐOÁN THÌ MỚI VẼ BIỂU ĐỒ VIOLIN
             st.subheader("🌲 Sự phân tán của các cây quyết định (Confidence Visualization)")
-            fig_dist = px.violin(all_tree_preds, box=True, points="all", 
-                                 title="Phân phối dự đoán của 100 cây quyết định",
-                                 labels={'value': 'Giá trị ΔG dự đoán', 'variable': ''},
-                                 color_discrete_sequence=['#FF69B4'])
-            st.plotly_chart(fig_dist, use_container_width=True)
-            st.caption("💡 Giải thích: Các điểm càng tập trung sát nhau chứng tỏ mô hình càng tự tin vào kết quả.")
+            if st.session_state.last_preds is not None:
+                fig_dist = px.violin(st.session_state.last_preds, box=True, points="all", 
+                                     color_discrete_sequence=['#FF69B4'])
+                st.plotly_chart(fig_dist, use_container_width=True)
+            else:
+                st.warning("⚠️ Vui lòng nhấn 'CHẠY PHÂN TÍCH HỆ THỐNG' ở tab Dự đoán để xem phân tích này.")
 
     except Exception as e:
         st.error(f"Lỗi hệ thống AI: {e}")
