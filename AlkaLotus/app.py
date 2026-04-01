@@ -125,20 +125,6 @@ if page == "1. Thư viện Alkaloid":
     if choice != st.session_state.selected_compound:
         st.session_state.selected_compound = choice
         st.rerun()
-     import plotly.graph_objects as go
-
-st.subheader("🌡️ Bản đồ nhiệt Ái lực liên kết (Heatmap)")
-# Dữ liệu thực nghiệm của nhóm An
-heatmap_data = df[['Name', 'dG_BACE1', 'dG_AChE']].set_index('Name')
-
-fig_heat = px.imshow(
-    heatmap_data.T, 
-    labels=dict(x="Alkaloid", y="Enzyme", color="ΔG (kcal/mol)"),
-    color_continuous_scale='RdPu_r', # Màu hồng sen đậm dần theo độ mạnh liên kết
-    aspect="auto"
-)
-st.plotly_chart(fig_heat, use_container_width=True)
-st.caption("💡 Giải thích: Màu càng đậm (âm hơn) thể hiện ái lực liên kết càng mạnh.")
 # --- MODULE 2: VIRTUAL DOCKING LAB (DỮ LIỆU CHÍNH THỨC TỪ BÁO CÁO 2026) ---
 elif page == "2. Mô phỏng Docking 3D":
     st.title("🔬 Virtual Docking Lab (In Silico)")
