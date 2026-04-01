@@ -358,7 +358,7 @@ elif page == "4. AI Predictor (ML)":
             c1, c2 = st.columns([2, 1])
             with c1:
                 st.markdown('<div class="card">', unsafe_allow_html=True)
-                mw = st.number_input("Khối lượng (MW):", 100.0, 1000.0, 311.40)
+                mw = st.number_input("Khối lượng (Molecular Weight):", 100.0, 1000.0, 311.40)
                 logp = st.number_input("LogP (Lipophilicity):", -2.0, 10.0, 3.00)
                 hbd = st.slider("H-Donor:", 0, 12, 1)
                 hba = st.slider("H-Acceptor:", 0, 20, 5)
