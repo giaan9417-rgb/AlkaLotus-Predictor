@@ -408,18 +408,24 @@ elif page == "4. AI Predictor (ML)":
                 st.plotly_chart(fig_dist, use_container_width=True)
                 
                 # --- PHẦN GIẢI THÍCH CHI TIẾT THÊM VÀO ---
-                with st.expander("📝 Giải thích chi tiết về biểu đồ Độ tin cậy (Confidence)"):
+with st.expander("🔬 HƯỚNG DẪN ĐỌC HIỂU PHÂN TÍCH ĐỘ TIN CẬY (XAI)", expanded=True):
                     st.markdown(f"""
-                    ### 🧬 Phân tích phân phối dự đoán
-                    Biểu đồ **Violin Plot** minh bạch hóa cách hệ thống AI đưa ra con số dự đoán cuối cùng thông qua 100 cây quyết định:
+                    ### 🔍 Giải mã biểu đồ "Đàn bầu" (Violin Plot)
+                    Hệ thống **AlkaLotus** sử dụng mô hình *Random Forest* với 100 cây quyết định. Biểu đồ này minh bạch hóa sự "tranh luận" giữa 100 thực thể đó để đưa ra kết quả cuối cùng.
                     
-                    1. **Sự đồng thuận (Consensus):** Phần phình to nhất của biểu đồ (Median) cho thấy dải giá trị mà đa số các cây quyết định tập trung vào. 
-                    2. **Độ biến thiên (Variance):** - **Dấu chấm hồng:** Dự đoán riêng lẻ của từng cây.
-                        - **Khung ở giữa (Boxplot):** Cho thấy dải giá trị từ 25% đến 75% các dự đoán.
-                    3. **Ý nghĩa khoa học:** Việc hiểu được sự phân tán giúp đảm bảo kết quả không bị ảnh hưởng bởi các giá trị nhiễu, tăng tính khách quan cho mô hình sàng lọc.
+                    ---
+                    #### 1️⃣ Ý nghĩa của hình dáng biểu đồ
+                    * **Phần bụng phình to nhất:** Đại diện cho vùng **Đồng thuận cao**. Đa số các cây quyết định đều tập trung dự đoán quanh giá trị này (thường là mức **{round(np.median(st.session_state.last_preds), 2)} kcal/mol**).
+                    * **Độ dài của biểu đồ:** Thể hiện dải sai số. Biểu đồ càng ngắn và tập trung, kết quả càng ít biến động.
+                    * **Các dấu chấm hồng:** Là "lá phiếu" dự đoán của từng cây quyết định riêng biệt.
                     
-                    **📌 Kết luận:** Với tập dữ liệu hiện tại, mô hình thể hiện mức độ tự tin **{round(st.session_state.get('conf_score', 0), 1)}%**, khẳng định thuật toán đã nhận diện ổn định các đặc trưng hóa lý của Alkaloid.
-                    """)
+                    #### 2️⃣ Các chỉ số kỹ thuật từ Boxplot (Khung chữ nhật giữa)
+                    * **Vạch trắng (Median):** Giá trị trung vị, là con số đại diện chính xác nhất cho ái lực liên kết của hợp chất.
+                    * **Chiều cao khối hộp:** Chứa 50% số lượng dự đoán sát với thực tế nhất. Hộp càng hẹp, độ tin cậy càng cao.
+                    
+                    #### 3️⃣ Nhận định từ hệ thống AlkaLotus
+                    * **Độ tin cậy hiện tại:** :green[**{round(st.session_state.get('conf_score', 0), 1)}%**]
+                    * **Đánh giá:** Với mức độ tập trung dữ liệu này, kết quả sàng lọc ảo có giá trị tham khảo rất tốt cho việc định hướng thí nghiệm thực tế (In Vitro).
             else:
                 st.warning("⚠️ Vui lòng nhấn 'CHẠY PHÂN TÍCH HỆ THỐNG' ở tab Dự đoán để xem phân tích này.")
 
