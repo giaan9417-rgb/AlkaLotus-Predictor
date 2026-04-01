@@ -101,40 +101,48 @@ st.sidebar.divider()
 st.sidebar.caption("👨‍ Học sinh: **Quách Gia An & Nguyễn Lê Bách Hợp**")
 st.sidebar.caption("🏫 Đơn vị: **Lớp 10-K30 - THPT Chuyên Hùng Vương**")
 
-# --- MODULE 1: DATABASE EXPLORER (NÂNG CẤP HEATMAP & SMART FILTER) ---
+# --- MODULE 1: DATABASE EXPLORER (CẬP NHẬT TÊN BIẾN CHUẨN KHOA HỌC) ---
 if page == "1. Thư viện Alkaloid":
     st.title("📚 Thư viện số hóa Alkaloid")
     
     with st.expander("🔍 Bộ lọc sàng lọc thuốc (Lipinski Rule of 5)", expanded=True):
         c1, c2, c3, c4 = st.columns(4)
-        mw_f = c1.checkbox("Molecular Weight < 500", value=True, help="Khối lượng phân tử")
-        lp_f = c2.checkbox("LogP < 5", value=True, help="Độ ưa dầu")
-        hbd_f = c3.checkbox("H-Donor < 5", value=True, help="Số liên kết H cho")
-        hba_f = c4.checkbox("H-Acceptor < 10", value=True, help="Số liên kết H nhận")
+        # Đã thay đổi label hiển thị thành Molecular Weight
+        mw_f = c1.checkbox("Molecular Weight < 500", value=True, help="Khối lượng phân tử (Dalton)")
+        lp_f = c2.checkbox("LogP < 5", value=True, help="Độ ưa dầu/nước")
+        hbd_f = c3.checkbox("H-Donor < 5", value=True, help="Số liên kết Hydrogen cho")
+        hba_f = c4.checkbox("H-Acceptor < 10", value=True, help="Số liên kết Hydrogen nhận")
     
     # Logic lọc dữ liệu động
     filtered_df = df.copy()
-    if mw_f: filtered_df = filtered_df[filtered_df['Molecular Weight'] < 500]
-    if lp_f: filtered_df = filtered_df[filtered_df['LogP'] < 5]
-    if hbd_f: filtered_df = filtered_df[filtered_df['HBD'] < 5]
-    if hba_f: filtered_df = filtered_df[filtered_df['HBA'] < 10]
     
-    # HIỂN THỊ BẢNG DỮ LIỆU
-    st.dataframe(filtered_df[['Name', 'Formula', 'Molecular Weight', 'LogP', 'HBD', 'HBA']], use_container_width=True)
+    # Đảm bảo tên cột trong file dữ liệu (df) của An cũng là 'Molecular Weight'
+    if mw_f: 
+        filtered_df = filtered_df[filtered_df['Molecular Weight'] < 500]
+    if lp_f: 
+        filtered_df = filtered_df[filtered_df['LogP'] < 5]
+    if hbd_f: 
+        filtered_df = filtered_df[filtered_df['HBD'] < 5]
+    if hba_f: 
+        filtered_df = filtered_df[filtered_df['HBA'] < 10]
+    
+    # HIỂN THỊ BẢNG DỮ LIỆU (Đã cập nhật tiêu đề cột)
+    st.dataframe(
+        filtered_df[['Name', 'Formula', 'Molecular Weight', 'LogP', 'HBD', 'HBA']], 
+        use_container_width=True
+    )
 
-    # --- TÍNH NĂNG 1: HEATMAP PHÂN TÍCH TỔNG QUAN (MỚI) ---
+    # --- TÍNH NĂNG 1: HEATMAP PHÂN TÍCH TỔNG QUAN ---
     st.markdown("### 🌡️ Phân tích Ái lực liên kết Tổng quát")
     if not filtered_df.empty:
-        # Chuẩn bị dữ liệu Heatmap từ các cột dG có sẵn trong DataFrame của An
         heatmap_data = filtered_df[['Name', 'dG_BACE1', 'dG_AChE']].set_index('Name')
         
-        # Vẽ biểu đồ nhiệt bằng Plotly
         import plotly.graph_objects as go
         fig_heat = px.imshow(
             heatmap_data.T, 
             labels=dict(x="Hợp chất", y="Enzyme mục tiêu", color="ΔG (kcal/mol)"),
-            color_continuous_scale='RdPu_r', # Màu hồng sen đặc trưng của AlkaLotus
-            text_auto=True, # Hiển thị số trực tiếp trên ô màu cho BGK dễ nhìn
+            color_continuous_scale='RdPu_r', 
+            text_auto=True, 
             aspect="auto"
         )
         
@@ -146,9 +154,8 @@ if page == "1. Thư viện Alkaloid":
 
     st.divider()
 
-    # CHỌN HỢP CHẤT (Đồng bộ với Session State để fix lỗi mất tính năng)
+    # CHỌN HỢP CHẤT (Đồng bộ với Session State)
     compounds = df['Name'].tolist()
-    # Đảm bảo index luôn hợp lệ
     current_idx = compounds.index(st.session_state.selected_compound) if st.session_state.selected_compound in compounds else 0
     
     choice = st.selectbox("🎯 Chọn hợp chất mục tiêu để phân tích sâu ở các Module sau:", 
@@ -156,8 +163,7 @@ if page == "1. Thư viện Alkaloid":
     
     if choice != st.session_state.selected_compound:
         st.session_state.selected_compound = choice
-        st.rerun()
-# --- MODULE 2: VIRTUAL DOCKING LAB (DỮ LIỆU CHÍNH THỨC TỪ BÁO CÁO 2026) ---
+        st.rerun()# --- MODULE 2: VIRTUAL DOCKING LAB (DỮ LIỆU CHÍNH THỨC TỪ BÁO CÁO 2026) ---
 elif page == "2. Mô phỏng Docking 3D":
     st.title("🔬 Virtual Docking Lab (In Silico)")
     
