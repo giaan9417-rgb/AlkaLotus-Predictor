@@ -341,7 +341,7 @@ IV. DƯỢC ĐỘNG HỌC & ĐỘ AN TOÀN (ADMET)
         "Nguồn": ["PMID: 25442253", "PMID: 25442253", "PMID: 25442253", "Elsevier 2015"]
     }
     st.table(pd.DataFrame(real_data))
-# --- MODULE 4: AI PREDICTOR (BẢN FIX LỖI & THÊM GIẢI THÍCH CHI TIẾT) ---
+# --- MODULE 4: AI PREDICTOR (BẢN FIX LỖI THỤT LỀ & GIẢI THÍCH CHI TIẾT) ---
 elif page == "4. AI Predictor (ML)":
     st.title("🛡️ AI Research Expert - Molecular Screening")
     st.markdown("<div class='xai-box'><b>Phân tích đa tầng XAI:</b> Sử dụng Explainable AI để minh bạch hóa dự đoán và đánh giá độ tin cậy.</div>", unsafe_allow_html=True)
@@ -373,9 +373,8 @@ elif page == "4. AI Predictor (ML)":
                 st.session_state.last_preds = all_tree_preds 
                 
                 std_dev = np.std(all_tree_preds)
-                # Tính toán Confidence Score dựa trên sự phân tán
                 confidence_val = max(0, min(100, 100 - (std_dev * 15)))
-                st.session_state.conf_score = confidence_val # Lưu lại để dùng ở tab Expert
+                st.session_state.conf_score = confidence_val
                 
                 violations = sum([mw > 500, logp > 5, hbd > 5, hba > 10])
                 safety_score = 100 - (violations * 25)
@@ -407,25 +406,26 @@ elif page == "4. AI Predictor (ML)":
                                      color_discrete_sequence=['#FF69B4'])
                 st.plotly_chart(fig_dist, use_container_width=True)
                 
-                # --- PHẦN GIẢI THÍCH CHI TIẾT THÊM VÀO ---
-with st.expander("🔬 HƯỚNG DẪN ĐỌC HIỂU PHÂN TÍCH ĐỘ TIN CẬY (XAI)", expanded=True):
+                # --- PHẦN GIẢI THÍCH CHI TIẾT (ĐÃ THỤT LỀ CHUẨN) ---
+                with st.expander("🔬 HƯỚNG DẪN ĐỌC HIỂU PHÂN TÍCH ĐỘ TIN CẬY (XAI)", expanded=True):
                     st.markdown(f"""
                     ### 🔍 Giải mã biểu đồ "Đàn bầu" (Violin Plot)
-                    Hệ thống **AlkaLotus** sử dụng mô hình *Random Forest* với 100 cây quyết định. Biểu đồ này minh bạch hóa sự "tranh luận" giữa 100 thực thể đó để đưa ra kết quả cuối cùng.
+                    Hệ thống **AlkaLotus** sử dụng mô hình *Random Forest* với 100 cây quyết định. Biểu đồ này minh bạch hóa sự "tranh luận" giữa 100 thực thể đó.
                     
                     ---
                     #### 1️⃣ Ý nghĩa của hình dáng biểu đồ
-                    * **Phần bụng phình to nhất:** Đại diện cho vùng **Đồng thuận cao**. Đa số các cây quyết định đều tập trung dự đoán quanh giá trị này (thường là mức **{round(np.median(st.session_state.last_preds), 2)} kcal/mol**).
-                    * **Độ dài của biểu đồ:** Thể hiện dải sai số. Biểu đồ càng ngắn và tập trung, kết quả càng ít biến động.
-                    * **Các dấu chấm hồng:** Là "lá phiếu" dự đoán của từng cây quyết định riêng biệt.
+                    * **Phần bụng phình to nhất:** Đại diện cho vùng **Đồng thuận cao**. Đa số các cây đều dự đoán quanh mức **{round(np.median(st.session_state.last_preds), 2)} kcal/mol**.
+                    * **Độ dài biểu đồ:** Thể hiện dải sai số. Biểu đồ càng ngắn, kết quả càng ít biến động và tin cậy hơn.
+                    * **Dấu chấm hồng:** Là kết quả riêng lẻ của 1 trong 100 cây quyết định.
                     
-                    #### 2️⃣ Các chỉ số kỹ thuật từ Boxplot (Khung chữ nhật giữa)
-                    * **Vạch trắng (Median):** Giá trị trung vị, là con số đại diện chính xác nhất cho ái lực liên kết của hợp chất.
-                    * **Chiều cao khối hộp:** Chứa 50% số lượng dự đoán sát với thực tế nhất. Hộp càng hẹp, độ tin cậy càng cao.
+                    #### 2️⃣ Các chỉ số từ Boxplot (Khung giữa)
+                    * **Vạch trắng (Median):** Điểm trung vị, là con số đại diện cuối cùng cho ái lực liên kết.
+                    * **Khối hộp:** Chứa 50% lượng dự đoán tập trung nhất. Hộp càng hẹp, độ tự tin của AI càng cao.
                     
-                    #### 3️⃣ Nhận định từ hệ thống AlkaLotus
-                    * **Độ tin cậy hiện tại:** :green[**{round(st.session_state.get('conf_score', 0), 1)}%**]
-                    * **Đánh giá:** Với mức độ tập trung dữ liệu này, kết quả sàng lọc ảo có giá trị tham khảo rất tốt cho việc định hướng thí nghiệm thực tế (In Vitro).
+                    #### 3️⃣ Nhận định hệ thống
+                    * **Độ tin cậy:** :green[**{round(st.session_state.get('conf_score', 0), 1)}%**]
+                    * **Đánh giá:** Kết quả có tính ổn định cao, đủ điều kiện để định hướng các nghiên cứu chuyên sâu tiếp theo.
+                    """)
             else:
                 st.warning("⚠️ Vui lòng nhấn 'CHẠY PHÂN TÍCH HỆ THỐNG' ở tab Dự đoán để xem phân tích này.")
 
