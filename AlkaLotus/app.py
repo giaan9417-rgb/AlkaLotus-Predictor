@@ -105,7 +105,7 @@ st.sidebar.caption("🏫 Đơn vị: **Lớp 10-K30 - THPT Chuyên Hùng Vương
 if page == "1. Thư viện Alkaloid":
     st.title("📚 Thư viện số hóa Alkaloid")
     
-    # 🛠️ DÒNG QUAN TRỌNG: Đổi tên cột từ MW sang Molecular Weight để tránh lỗi KeyError
+
     if 'MW' in df.columns:
         df = df.rename(columns={'MW': 'Molecular Weight'})
     
@@ -142,7 +142,7 @@ if page == "1. Thư viện Alkaloid":
         
         fig_heat = px.imshow(
             heatmap_data.T, 
-            labels=dict(x="Hợp chất", y="Enzyme mục tiêu", color="ΔG (kcal/mol)"),
+            labels=dict(x="HỢP CHẤT", y="ENZYME MỤC TIÊU", color="ΔG (kcal/mol)"),
             color_continuous_scale='RdPu_r', 
             text_auto=True, 
             aspect="auto"
