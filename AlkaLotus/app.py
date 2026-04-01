@@ -101,13 +101,16 @@ st.sidebar.divider()
 st.sidebar.caption("👨‍ Học sinh: **Quách Gia An & Nguyễn Lê Bách Hợp**")
 st.sidebar.caption("🏫 Đơn vị: **Lớp 10-K30 - THPT Chuyên Hùng Vương**")
 
-# --- MODULE 1: DATABASE EXPLORER (CẬP NHẬT TÊN BIẾN CHUẨN KHOA HỌC) ---
+# --- MODULE 1: DATABASE EXPLORER (BẢN FIX LỖI KEYERROR) ---
 if page == "1. Thư viện Alkaloid":
     st.title("📚 Thư viện số hóa Alkaloid")
     
+    # 🛠️ DÒNG QUAN TRỌNG: Đổi tên cột từ MW sang Molecular Weight để tránh lỗi KeyError
+    if 'MW' in df.columns:
+        df = df.rename(columns={'MW': 'Molecular Weight'})
+    
     with st.expander("🔍 Bộ lọc sàng lọc thuốc (Lipinski Rule of 5)", expanded=True):
         c1, c2, c3, c4 = st.columns(4)
-        # Đã thay đổi label hiển thị thành Molecular Weight
         mw_f = c1.checkbox("Molecular Weight < 500", value=True, help="Khối lượng phân tử (Dalton)")
         lp_f = c2.checkbox("LogP < 5", value=True, help="Độ ưa dầu/nước")
         hbd_f = c3.checkbox("H-Donor < 5", value=True, help="Số liên kết Hydrogen cho")
@@ -116,7 +119,7 @@ if page == "1. Thư viện Alkaloid":
     # Logic lọc dữ liệu động
     filtered_df = df.copy()
     
-    # Đảm bảo tên cột trong file dữ liệu (df) của An cũng là 'Molecular Weight'
+    # Bây giờ Pandas đã hiểu 'Molecular Weight' là gì
     if mw_f: 
         filtered_df = filtered_df[filtered_df['Molecular Weight'] < 500]
     if lp_f: 
@@ -126,7 +129,7 @@ if page == "1. Thư viện Alkaloid":
     if hba_f: 
         filtered_df = filtered_df[filtered_df['HBA'] < 10]
     
-    # HIỂN THỊ BẢNG DỮ LIỆU (Đã cập nhật tiêu đề cột)
+    # HIỂN THỊ BẢNG DỮ LIỆU
     st.dataframe(
         filtered_df[['Name', 'Formula', 'Molecular Weight', 'LogP', 'HBD', 'HBA']], 
         use_container_width=True
@@ -137,7 +140,6 @@ if page == "1. Thư viện Alkaloid":
     if not filtered_df.empty:
         heatmap_data = filtered_df[['Name', 'dG_BACE1', 'dG_AChE']].set_index('Name')
         
-        import plotly.graph_objects as go
         fig_heat = px.imshow(
             heatmap_data.T, 
             labels=dict(x="Hợp chất", y="Enzyme mục tiêu", color="ΔG (kcal/mol)"),
@@ -163,7 +165,8 @@ if page == "1. Thư viện Alkaloid":
     
     if choice != st.session_state.selected_compound:
         st.session_state.selected_compound = choice
-        st.rerun()# --- MODULE 2: VIRTUAL DOCKING LAB (DỮ LIỆU CHÍNH THỨC TỪ BÁO CÁO 2026) ---
+        st.rerun()
+# --- MODULE 2: VIRTUAL DOCKING LAB (DỮ LIỆU CHÍNH THỨC TỪ BÁO CÁO 2026) ---
 elif page == "2. Mô phỏng Docking 3D":
     st.title("🔬 Virtual Docking Lab (In Silico)")
     
