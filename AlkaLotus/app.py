@@ -107,20 +107,20 @@ if page == "1. Thư viện Alkaloid":
     
     with st.expander("🔍 Bộ lọc sàng lọc thuốc (Lipinski Rule of 5)", expanded=True):
         c1, c2, c3, c4 = st.columns(4)
-        mw_f = c1.checkbox("MW < 500", value=True, help="Khối lượng phân tử")
+        mw_f = c1.checkbox("Molecular Weight < 500", value=True, help="Khối lượng phân tử")
         lp_f = c2.checkbox("LogP < 5", value=True, help="Độ ưa dầu")
         hbd_f = c3.checkbox("H-Donor < 5", value=True, help="Số liên kết H cho")
         hba_f = c4.checkbox("H-Acceptor < 10", value=True, help="Số liên kết H nhận")
     
     # Logic lọc dữ liệu động
     filtered_df = df.copy()
-    if mw_f: filtered_df = filtered_df[filtered_df['MW'] < 500]
+    if mw_f: filtered_df = filtered_df[filtered_df['Molecular Weight'] < 500]
     if lp_f: filtered_df = filtered_df[filtered_df['LogP'] < 5]
     if hbd_f: filtered_df = filtered_df[filtered_df['HBD'] < 5]
     if hba_f: filtered_df = filtered_df[filtered_df['HBA'] < 10]
     
     # HIỂN THỊ BẢNG DỮ LIỆU
-    st.dataframe(filtered_df[['Name', 'Formula', 'MW', 'LogP', 'HBD', 'HBA']], use_container_width=True)
+    st.dataframe(filtered_df[['Name', 'Formula', 'Molecular Weight', 'LogP', 'HBD', 'HBA']], use_container_width=True)
 
     # --- TÍNH NĂNG 1: HEATMAP PHÂN TÍCH TỔNG QUAN (MỚI) ---
     st.markdown("### 🌡️ Phân tích Ái lực liên kết Tổng quát")
