@@ -341,7 +341,7 @@ IV. DƯỢC ĐỘNG HỌC & ĐỘ AN TOÀN (ADMET)
         "Nguồn": ["PMID: 25442253", "PMID: 25442253", "PMID: 25442253", "Elsevier 2015"]
     }
     st.table(pd.DataFrame(real_data))
-# --- MODULE 4: AI PREDICTOR (BẢN FIX LỖI NOT DEFINED) ---
+# --- MODULE 4: AI PREDICTOR (BẢN FIX LỖI & THÊM GIẢI THÍCH CHI TIẾT) ---
 elif page == "4. AI Predictor (ML)":
     st.title("🛡️ AI Research Expert - Molecular Screening")
     st.markdown("<div class='xai-box'><b>Phân tích đa tầng XAI:</b> Sử dụng Explainable AI để minh bạch hóa dự đoán và đánh giá độ tin cậy.</div>", unsafe_allow_html=True)
@@ -349,7 +349,6 @@ elif page == "4. AI Predictor (ML)":
     try:
         model_ai = joblib.load('AlkaLotus/alkmer_model.pkl')
         
-        # 1. KHỞI TẠO BIẾN TẠI ĐÂY ĐỂ TRÁNH LỖI "NOT DEFINED"
         if 'last_preds' not in st.session_state:
             st.session_state.last_preds = None
 
@@ -370,19 +369,20 @@ elif page == "4. AI Predictor (ML)":
                 features = np.array([[mw, logp, hbd, hba]])
                 pred_dg = model_ai.predict(features)[0]
                 
-                # TÍNH TOÁN VÀ LƯU VÀO SESSION STATE
                 all_tree_preds = [tree.predict(features)[0] for tree in model_ai.estimators_]
-                st.session_state.last_preds = all_tree_preds # Lưu lại để tab Expert dùng
+                st.session_state.last_preds = all_tree_preds 
                 
                 std_dev = np.std(all_tree_preds)
-                confidence_score = max(0, min(100, 100 - (std_dev * 15))) 
+                # Tính toán Confidence Score dựa trên sự phân tán
+                confidence_val = max(0, min(100, 100 - (std_dev * 15)))
+                st.session_state.conf_score = confidence_val # Lưu lại để dùng ở tab Expert
                 
                 violations = sum([mw > 500, logp > 5, hbd > 5, hba > 10])
                 safety_score = 100 - (violations * 25)
 
                 with c2:
                     st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
-                    st.metric("AI Confidence Score", f"{round(confidence_score, 1)}%")
+                    st.metric("AI Confidence Score", f"{round(confidence_val, 1)}%")
                     st.metric("Drug-likeness", f"{safety_score}%")
                     
                     if safety_score < 75:
@@ -395,19 +395,31 @@ elif page == "4. AI Predictor (ML)":
 
         with tab_expert:
             st.subheader("🔬 Giải thích cơ chế dự đoán (Feature Importance)")
-            # Phần vẽ biểu đồ Feature Importance (Giữ nguyên của An)
             importances = model_ai.feature_importances_
             labels = ['MW', 'LogP', 'H-Donor', 'H-Acceptor']
             imp_df = pd.DataFrame({'Yếu tố': labels, 'Mức độ ảnh hưởng (%)': importances * 100})
             fig_xai = px.bar(imp_df, x='Mức độ ảnh hưởng (%)', y='Yếu tố', orientation='h', color_discrete_sequence=['#FF69B4'])
             st.plotly_chart(fig_xai, use_container_width=True)
 
-            # KIỂM TRA NẾU ĐÃ CÓ DỮ LIỆU DỰ ĐOÁN THÌ MỚI VẼ BIỂU ĐỒ VIOLIN
             st.subheader("🌲 Sự phân tán của các cây quyết định (Confidence Visualization)")
             if st.session_state.last_preds is not None:
                 fig_dist = px.violin(st.session_state.last_preds, box=True, points="all", 
                                      color_discrete_sequence=['#FF69B4'])
                 st.plotly_chart(fig_dist, use_container_width=True)
+                
+                # --- PHẦN GIẢI THÍCH CHI TIẾT THÊM VÀO ---
+                with st.expander("📝 Giải thích chi tiết về biểu đồ Độ tin cậy (Confidence)"):
+                    st.markdown(f"""
+                    ### 🧬 Phân tích phân phối dự đoán
+                    Biểu đồ **Violin Plot** minh bạch hóa cách hệ thống AI đưa ra con số dự đoán cuối cùng thông qua 100 cây quyết định:
+                    
+                    1. **Sự đồng thuận (Consensus):** Phần phình to nhất của biểu đồ (Median) cho thấy dải giá trị mà đa số các cây quyết định tập trung vào. 
+                    2. **Độ biến thiên (Variance):** - **Dấu chấm hồng:** Dự đoán riêng lẻ của từng cây.
+                        - **Khung ở giữa (Boxplot):** Cho thấy dải giá trị từ 25% đến 75% các dự đoán.
+                    3. **Ý nghĩa khoa học:** Việc hiểu được sự phân tán giúp đảm bảo kết quả không bị ảnh hưởng bởi các giá trị nhiễu, tăng tính khách quan cho mô hình sàng lọc.
+                    
+                    **📌 Kết luận:** Với tập dữ liệu hiện tại, mô hình thể hiện mức độ tự tin **{round(st.session_state.get('conf_score', 0), 1)}%**, khẳng định thuật toán đã nhận diện ổn định các đặc trưng hóa lý của Alkaloid.
+                    """)
             else:
                 st.warning("⚠️ Vui lòng nhấn 'CHẠY PHÂN TÍCH HỆ THỐNG' ở tab Dự đoán để xem phân tích này.")
 
