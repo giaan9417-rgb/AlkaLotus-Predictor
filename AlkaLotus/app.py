@@ -101,27 +101,59 @@ st.sidebar.divider()
 st.sidebar.caption("👨‍ Học sinh: **Quách Gia An & Nguyễn Lê Bách Hợp**")
 st.sidebar.caption("🏫 Đơn vị: **Lớp 10-K30 - THPT Chuyên Hùng Vương**")
 
-# --- MODULE 1: DATABASE EXPLORER ---
+# --- MODULE 1: DATABASE EXPLORER (NÂNG CẤP HEATMAP & SMART FILTER) ---
 if page == "1. Thư viện Alkaloid":
     st.title("📚 Thư viện số hóa Alkaloid")
-    with st.expander("🔍 Bộ lọc sàng lọc thuốc (Lipinski Rule of 5)"):
-        # Sửa từ c1, c2 thành c1, c2, c3, c4 để hiện đủ 4 hàng
-        c1, c2, c3, c4 = st.columns(4)
-        mw_f = c1.checkbox("MW < 500", value=True)
-        lp_f = c2.checkbox("LogP < 5", value=True)
-        hbd_f = c3.checkbox("H-Donor < 5", value=True)  # Thêm bộ lọc HBD
-        hba_f = c4.checkbox("H-Acceptor < 10", value=True) # Thêm bộ lọc HBA
     
+    with st.expander("🔍 Bộ lọc sàng lọc thuốc (Lipinski Rule of 5)", expanded=True):
+        c1, c2, c3, c4 = st.columns(4)
+        mw_f = c1.checkbox("MW < 500", value=True, help="Khối lượng phân tử")
+        lp_f = c2.checkbox("LogP < 5", value=True, help="Độ ưa dầu")
+        hbd_f = c3.checkbox("H-Donor < 5", value=True, help="Số liên kết H cho")
+        hba_f = c4.checkbox("H-Acceptor < 10", value=True, help="Số liên kết H nhận")
+    
+    # Logic lọc dữ liệu động
     filtered_df = df.copy()
     if mw_f: filtered_df = filtered_df[filtered_df['MW'] < 500]
     if lp_f: filtered_df = filtered_df[filtered_df['LogP'] < 5]
-    if hbd_f: filtered_df = filtered_df[filtered_df['HBD'] < 5]   # Thêm logic lọc HBD
-    if hba_f: filtered_df = filtered_df[filtered_df['HBA'] < 10]  # Thêm logic lọc HBA
+    if hbd_f: filtered_df = filtered_df[filtered_df['HBD'] < 5]
+    if hba_f: filtered_df = filtered_df[filtered_df['HBA'] < 10]
     
+    # HIỂN THỊ BẢNG DỮ LIỆU
     st.dataframe(filtered_df[['Name', 'Formula', 'MW', 'LogP', 'HBD', 'HBA']], use_container_width=True)
-    
+
+    # --- TÍNH NĂNG 1: HEATMAP PHÂN TÍCH TỔNG QUAN (MỚI) ---
+    st.markdown("### 🌡️ Phân tích Ái lực liên kết Tổng quát")
+    if not filtered_df.empty:
+        # Chuẩn bị dữ liệu Heatmap từ các cột dG có sẵn trong DataFrame của An
+        heatmap_data = filtered_df[['Name', 'dG_BACE1', 'dG_AChE']].set_index('Name')
+        
+        # Vẽ biểu đồ nhiệt bằng Plotly
+        import plotly.graph_objects as go
+        fig_heat = px.imshow(
+            heatmap_data.T, 
+            labels=dict(x="Hợp chất", y="Enzyme mục tiêu", color="ΔG (kcal/mol)"),
+            color_continuous_scale='RdPu_r', # Màu hồng sen đặc trưng của AlkaLotus
+            text_auto=True, # Hiển thị số trực tiếp trên ô màu cho BGK dễ nhìn
+            aspect="auto"
+        )
+        
+        fig_heat.update_layout(height=350, margin=dict(l=20, r=20, t=20, b=20))
+        st.plotly_chart(fig_heat, use_container_width=True)
+        st.caption("💡 *Ghi chú: Màu càng hồng đậm (giá trị âm càng lớn) thể hiện ái lực liên kết càng mạnh.*")
+    else:
+        st.warning("Không có hợp chất nào thỏa mãn bộ lọc hiện tại.")
+
+    st.divider()
+
+    # CHỌN HỢP CHẤT (Đồng bộ với Session State để fix lỗi mất tính năng)
     compounds = df['Name'].tolist()
-    choice = st.selectbox("Chọn hợp chất mục tiêu:", compounds, index=compounds.index(st.session_state.selected_compound))
+    # Đảm bảo index luôn hợp lệ
+    current_idx = compounds.index(st.session_state.selected_compound) if st.session_state.selected_compound in compounds else 0
+    
+    choice = st.selectbox("🎯 Chọn hợp chất mục tiêu để phân tích sâu ở các Module sau:", 
+                          compounds, index=current_idx)
+    
     if choice != st.session_state.selected_compound:
         st.session_state.selected_compound = choice
         st.rerun()
