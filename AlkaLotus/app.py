@@ -1,5 +1,11 @@
 import streamlit as st
+import pandas as pd
+import joblib
+import numpy as np
 import time
+import os  # <--- PHẢI CÓ DÒNG NÀY ĐỂ FIX LỖI TRÊN ẢNH
+import plotly.express as px
+from stmol import showmol
 
 # --- 1. CẤU HÌNH TRANG ---
 st.set_page_config(
