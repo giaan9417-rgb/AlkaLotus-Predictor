@@ -1,14 +1,5 @@
 import streamlit as st
-import pandas as pd
-import joblib
-import numpy as np
 import time
-import os
-import plotly.express as px
-from stmol import showmol
-# Giữ nguyên các import của bạn
-# from data import get_database
-# from utils import fetch_pdb, render_3d_molecule, check_lipinski, create_admet_radar, classify_potential
 
 # --- 1. CẤU HÌNH TRANG ---
 st.set_page_config(
@@ -18,98 +9,89 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. HIỆU ỨNG HOA SEN BAY LÊN TỪ TỪ (CẬP NHẬT) ---
-intro_placeholder = st.empty()
+# --- 2. HIỆU ỨNG CHÀO MỪNG (CHỈ HIỆN 1 LẦN) ---
+if 'visited' not in st.session_state:
+    intro_placeholder = st.empty()
+    with intro_placeholder.container():
+        st.markdown(
+            """
+            <style>
+            /* Hiệu ứng bay lên chậm rãi cho hoa sen và sinh học */
+            @keyframes floatUpMain {
+                0% { transform: translateY(100vh) scale(0.7); opacity: 0; }
+                20% { opacity: 1; }
+                80% { opacity: 1; }
+                100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
+            }
+            
+            /* Hiệu ứng bay chao nghiêng cho lá sen */
+            @keyframes floatLeaf {
+                0% { transform: translateY(100vh) translateX(0) rotate(0deg); opacity: 0; }
+                20% { opacity: 0.8; }
+                50% { transform: translateY(50vh) translateX(50px) rotate(45deg); }
+                100% { transform: translateY(-100vh) translateX(-50px) rotate(90deg); opacity: 0; }
+            }
 
-with intro_placeholder.container():
-    st.markdown(
-        """
-        <style>
-        /* Hiệu ứng bay lên chậm rãi và mượt mà */
-        @keyframes floatUpSlow {
-            0% { transform: translateY(100vh) scale(0.7); opacity: 0; }
-            20% { opacity: 1; }
-            80% { opacity: 1; }
-            100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
-        }
-        
-        /* Hiệu ứng chữ hiện hình tinh tế */
-        @keyframes fadeInText {
-            0% { opacity: 0; transform: translateY(30px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
+            .lotus-overlay {
+                position: fixed;
+                top: 0; left: 0; width: 100vw; height: 100vh;
+                background-color: white;
+                z-index: 9999;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                overflow: hidden;
+            }
 
-        .lotus-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: white;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
+            .main-icons {
+                font-size: 130px;
+                animation: floatUpMain 5s ease-in-out forwards;
+                filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.4));
+            }
 
-        .lotus-icon {
-            font-size: 130px;
-            animation: floatUpSlow 5s ease-in-out forwards;
-        }
+            /* Các lá sen bay xung quanh */
+            .leaf {
+                position: absolute;
+                font-size: 50px;
+                animation: floatLeaf 6s ease-in-out infinite;
+                opacity: 0;
+            }
 
-        .lotus-text {
-            margin-top: 40px;
-            color: #FF69B4;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            font-weight: bold;
-            font-size: 26px;
-            letter-spacing: 2px;
-            text-align: center;
-            animation: fadeInText 2.5s ease-out 1s both;
-        }
-        </style>
-        
-        <div class="lotus-overlay">
-            <div class="lotus-icon">🪷</div>
-            <div class="lotus-text">CHÀO MỪNG ĐẾN HỆ THỐNG ALKALOTUS PREDICTOR</div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    time.sleep(5) # Chờ 5 giây để hiệu ứng bay hết màn hình
+            .lotus-text {
+                margin-top: 50px;
+                color: #FF69B4;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                font-weight: bold;
+                font-size: 28px;
+                letter-spacing: 3px;
+                text-align: center;
+                z-index: 10;
+                animation: fadeIn 2s ease-out 1s both;
+            }
 
-intro_placeholder.empty()
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            </style>
+            
+            <div class="lotus-overlay">
+                <div class="leaf" style="left: 15%; animation-delay: 0s;">🍃</div>
+                <div class="leaf" style="left: 80%; animation-delay: 1.5s;">🍃</div>
+                <div class="leaf" style="left: 25%; animation-delay: 3s;">🍃</div>
+                
+                <div class="main-icons">🪷 🧬</div>
+                
+                <div class="lotus-text">CHÀO MỪNG ĐẾN HỆ THỐNG ALKALOTUS PREDICTOR</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        time.sleep(5) # Để hiệu ứng chạy hết 5 giây
+    
+    intro_placeholder.empty()
+    st.session_state['visited'] = True
 
-# --- 3. GIAO DIỆN CSS CHÍNH ---
-st.markdown("""
-    <style>
-    .stApp { background-color: #FFFFFF !important; }
-    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown { color: #262730 !important; }
-    .card {
-        background-color: #F8F9FA; 
-        padding: 20px; 
-        border-radius: 15px; 
-        margin-bottom: 20px;
-        border: 1px solid #E0E0E0;
-        box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
-    }
-    .xai-box {
-        background-color: #FFF0F5;
-        padding: 15px;
-        border-radius: 10px;
-        border-left: 5px solid #FF69B4;
-    }
-    [data-testid="stMetricValue"] { color: #FF69B4 !important; font-weight: bold; }
-    .stButton>button { 
-        width: 100%; 
-        border-radius: 20px; 
-        background-color: #FF69B4; 
-        color: white;
-        font-weight: bold;
-        border: none;
-    }
-    .stButton>button:hover { background-color: #FF1493; color: white; }
-    </style>
-    """, unsafe_allow_html=True)
+
+st.title("🪷 AlkaLotus Predictor")
 
 # --- 4. KHỞI TẠO DỮ LIỆU ---
 try:
