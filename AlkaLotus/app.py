@@ -19,7 +19,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. HIỆU ỨNG CHÀO MỪNG (BẢN FIX HIỂN THỊ) ---
 if 'visited' not in st.session_state:
     intro_placeholder = st.empty()
     with intro_placeholder.container():
@@ -81,9 +80,9 @@ if 'visited' not in st.session_state:
                 <div class="lotus-text">CHÀO MỪNG ĐẾN HỆ THỐNG ALKALOTUS PREDICTOR</div>
             </div>
             """, 
-            unsafe_allow_html=True  # <--- QUAN TRỌNG NHẤT LÀ DÒNG NÀY NÈ AN!
+            unsafe_allow_html=True 
         )
-        time.sleep(3)
+        time.sleep(5)
     intro_placeholder.empty()
     st.session_state['visited'] = True
 
