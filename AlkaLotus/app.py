@@ -118,6 +118,91 @@ try:
 except ImportError:
     # Backup nếu không tìm thấy file data.py (Dành cho chạy test)
     df = pd.DataFrame({
+        'Name': ['Roemerine', 'Nuciferine'],
+        'MW': [279.33, 295.38],
+        'LogP': [3.1, 3.5],
+        'HBD': [0, 0],
+        'HBA': [3, 3],
+        'Formula': ['C18H17NO2', 'C19H21NO2']
+    })
+
+if 'selected_compound' not in st.session_state:
+    st.session_state.selected_compound = "Roemerine"
+
+# --- 5. SIDEBAR ---
+st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+
+logo_paths = [
+    "AlkaLotus/Logo_HungVuong.png.png", 
+    "Logo_HungVuong.png.png",
+    "AlkaLotus/Logo_HungVuong.png",
+    "Logo_HungVuong.png"
+]
+
+logo_found = False
+for path in logo_paths:
+    if os.path.exists(path):
+        st.sidebar.image(path, width=130)
+        logo_found = True
+        break
+
+if not logo_found:
+    github_logo_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png.png"
+    st.sidebar.image(github_logo_url, width=130)
+
+st.sidebar.markdown(
+    """
+    <p style='font-size: 1em; font-weight: bold; color: #2E2E2E; margin-top: 5px; margin-bottom: 0px;'>
+        Trường THPT Chuyên Hùng Vương
+    </p>
+    <p style='font-size: 0.8em; color: #666;'>TP. HỒ CHÍ MINH</p>
+    """, 
+    unsafe_allow_html=True
+)
+st.sidebar.markdown("</div>", unsafe_allow_html=True)
+st.sidebar.divider()
+
+st.sidebar.title("🪷 ALKALOTUS PREDICTOR")
+st.sidebar.markdown("<div style='text-align: justify; font-size: 0.9em;'><b>Hệ thống tích hợp Machine Learning</b> để tối ưu hóa quy trình sàng lọc ảo và dự đoán dược tính.</div>", unsafe_allow_html=True)
+
+st.sidebar.divider()
+page = st.sidebar.radio(
+    "Danh mục hệ thống",
+    ["1. Thư viện Alkaloid", "2. Mô phỏng Docking 3D", "3. Phân tích & Xuất báo cáo", "4. AI Predictor (ML)"]
+)
+st.sidebar.divider()
+st.sidebar.caption("👨‍ Học sinh: **Quách Gia An & Nguyễn Lê Bách Hợp**")
+st.sidebar.caption("🏫 Đơn vị: **Lớp 10-K30 - THPT Chuyên Hùng Vương**")
+
+# --- 6. MODULE 1: DATABASE EXPLORER ---
+if page == "1. Thư viện Alkaloid":
+    st.title("📚 Thư viện số hóa Alkaloid")
+    
+    if 'MW' in df.columns:
+        df = df.rename(columns={'MW': 'Molecular Weight'})
+    
+    with st.expander("🔍 Bộ lọc sàng lọc thuốc (Lipinski Rule of 5)", expanded=True):
+        c1, c2, c3, c4 = st.columns(4)
+        mw_f = c1.checkbox("Molecular Weight < 500", value=True)
+        lp_f = c2.checkbox("LogP < 5", value=True)
+        hbd_f = c3.checkbox("H-Donor < 5", value=True)
+        hba_f = c4.checkbox("H-Acceptor < 10", value=True)
+    
+    filtered_df = df.copy()
+    
+    if mw_f: 
+        filtered_df = filtered_df[filtered_df['Molecular Weight'] < 500]
+    if lp_f: 
+        filtered_df = filtered_df[filtered_df['LogP'] < 5]
+    if hbd_f: 
+        filtered_df = filtered_df[filtered_df['HBD'] < 5]
+    if hba_f: 
+        filtered_df = filtered_df[filtered_df['HBA'] < 10]
+    
+    st.dataframe(
+        filtered_df[['Name', 'Formula', 'Molecular Weight', 'LogP', 'HBD', 'HBA']], 
+        use_container_width=True
+    )
 
     # --- TÍNH NĂNG 1: HEATMAP PHÂN TÍCH TỔNG QUAN ---
     st.markdown("### 🌡️ Phân tích Ái lực liên kết Tổng quát")
