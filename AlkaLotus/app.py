@@ -318,9 +318,12 @@ elif page == "2. Mô phỏng Docking 3D":
         
         if user_dg < control_data['dg']:
             st.success(f"🌟 {selected_comp} có ái lực mạnh hơn thuốc chuẩn {control_data['name']} trên {comp_p}!")
-# --- MODULE 3: ANALYTICS & REPORT ---
-elif page == "3. Phân tích & Xuất báo cáo":
+# --- MODULE 3: PHÂN TÍCH & XUẤT BÁO CÁO ---
+if page == "3. Phân tích & Xuất báo cáo":
     st.title("📊 Phân tích Kết quả & Xuất báo cáo")
+    if 'selected_compound' not in st.session_state:
+        st.session_state.selected_compound = df['Name'].iloc[0]
+    selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
     st.subheader(f"Thông tin chi tiết hợp chất: {selected_data['Name']}")
     st.markdown('<div class="card">', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
