@@ -6,16 +6,68 @@ import time
 import os
 import plotly.express as px
 from stmol import showmol
-from data import get_database
-from utils import fetch_pdb, render_3d_molecule, check_lipinski, create_admet_radar, classify_potential
+# Giữ nguyên các import từ file của bạn
+# from data import get_database
+# from utils import fetch_pdb, render_3d_molecule, check_lipinski, create_admet_radar, classify_potential
 
-# Cấu hình trang
+# --- 1. CẤU HÌNH TRANG ---
 st.set_page_config(
     page_title="AlkaLotus Predictor | Alzheimer Research",
     layout="wide",
     page_icon="🪷",
     initial_sidebar_state="expanded"
 )
+
+# --- 2. HIỆU ỨNG HOA SEN BAY LÊN (THÊM MỚI TẠI ĐÂY) ---
+# Tạo một container trống để chứa hiệu ứng
+intro_placeholder = st.empty()
+
+with intro_placeholder.container():
+    st.markdown(
+        """
+        <style>
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+            50% { opacity: 1; transform: translateY(50vh) scale(1.2); }
+            100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
+        }
+        .lotus-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: white;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .lotus-icon {
+            font-size: 150px;
+            animation: floatUp 3s ease-in-out forwards;
+        }
+        .lotus-text {
+            margin-top: 20px;
+            color: #FF69B4;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            font-size: 20px;
+            animation: fadeIn 2s;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        </style>
+        
+        <div class="lotus-overlay">
+            <div class="lotus-icon">🪷</div>
+            <div class="lotus-text">Đang khởi tạo AlkaLotus Predictor...</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    time.sleep(3) # Hiệu ứng chạy trong 3 giây
+
+# Xóa hiệu ứng sau khi chạy xong để hiện nội dung chính
+intro_placeholder.empty()
 
 # Giao diện CSS
 st.markdown("""
