@@ -15,28 +15,26 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. HIỆU ỨNG CHÀO MỪNG (CHỈ HIỆN 1 LẦN) ---
+# --- 2. HIỆU ỨNG CHÀO MỪNG (BẢN FIX HIỂN THỊ) ---
 if 'visited' not in st.session_state:
     intro_placeholder = st.empty()
     with intro_placeholder.container():
         st.markdown(
             """
             <style>
-            /* Hiệu ứng bay lên chậm rãi cho hoa sen và sinh học */
-            @keyframes floatUpMain {
+            @keyframes floatUpSlow {
                 0% { transform: translateY(100vh) scale(0.7); opacity: 0; }
                 20% { opacity: 1; }
                 80% { opacity: 1; }
                 100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
             }
-            
-            /* Hiệu ứng bay chao nghiêng cho lá sen */
             @keyframes floatLeaf {
                 0% { transform: translateY(100vh) translateX(0) rotate(0deg); opacity: 0; }
                 20% { opacity: 0.8; }
                 50% { transform: translateY(50vh) translateX(50px) rotate(45deg); }
                 100% { transform: translateY(-100vh) translateX(-50px) rotate(90deg); opacity: 0; }
             }
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
             .lotus-overlay {
                 position: fixed;
@@ -49,21 +47,17 @@ if 'visited' not in st.session_state:
                 align-items: center;
                 overflow: hidden;
             }
-
             .main-icons {
                 font-size: 130px;
-                animation: floatUpMain 5s ease-in-out forwards;
+                animation: floatUpSlow 5s ease-in-out forwards;
                 filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.4));
             }
-
-            /* Các lá sen bay xung quanh */
             .leaf {
                 position: absolute;
                 font-size: 50px;
                 animation: floatLeaf 6s ease-in-out infinite;
                 opacity: 0;
             }
-
             .lotus-text {
                 margin-top: 50px;
                 color: #FF69B4;
@@ -72,27 +66,20 @@ if 'visited' not in st.session_state:
                 font-size: 28px;
                 letter-spacing: 3px;
                 text-align: center;
-                z-index: 10;
                 animation: fadeIn 2s ease-out 1s both;
             }
-
-            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
             </style>
             
             <div class="lotus-overlay">
                 <div class="leaf" style="left: 15%; animation-delay: 0s;">🍃</div>
                 <div class="leaf" style="left: 80%; animation-delay: 1.5s;">🍃</div>
-                <div class="leaf" style="left: 25%; animation-delay: 3s;">🍃</div>
-                
                 <div class="main-icons">🪷 🧬</div>
-                
                 <div class="lotus-text">CHÀO MỪNG ĐẾN HỆ THỐNG ALKALOTUS PREDICTOR</div>
             </div>
-            """,
-            unsafe_allow_html=True
+            """, 
+            unsafe_allow_html=True  # <--- QUAN TRỌNG NHẤT LÀ DÒNG NÀY NÈ AN!
         )
-        time.sleep(5) # Để hiệu ứng chạy hết 5 giây
-    
+        time.sleep(3)
     intro_placeholder.empty()
     st.session_state['visited'] = True
 
