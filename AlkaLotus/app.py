@@ -6,7 +6,7 @@ import time
 import os
 import plotly.express as px
 from stmol import showmol
-# Giữ nguyên các import từ file của bạn
+# Giữ nguyên các import của bạn
 # from data import get_database
 # from utils import fetch_pdb, render_3d_molecule, check_lipinski, create_admet_radar, classify_potential
 
@@ -18,19 +18,27 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. HIỆU ỨNG HOA SEN BAY LÊN (THÊM MỚI TẠI ĐÂY) ---
-# Tạo một container trống để chứa hiệu ứng
+# --- 2. HIỆU ỨNG HOA SEN BAY LÊN TỪ TỪ (CẬP NHẬT) ---
 intro_placeholder = st.empty()
 
 with intro_placeholder.container():
     st.markdown(
         """
         <style>
-        @keyframes floatUp {
-            0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
-            50% { opacity: 1; transform: translateY(50vh) scale(1.2); }
+        /* Hiệu ứng bay lên chậm rãi và mượt mà */
+        @keyframes floatUpSlow {
+            0% { transform: translateY(100vh) scale(0.7); opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
             100% { transform: translateY(-100vh) scale(1.5); opacity: 0; }
         }
+        
+        /* Hiệu ứng chữ hiện hình tinh tế */
+        @keyframes fadeInText {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
         .lotus-overlay {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -42,34 +50,36 @@ with intro_placeholder.container():
             align-items: center;
             overflow: hidden;
         }
+
         .lotus-icon {
-            font-size: 150px;
-            animation: floatUp 3s ease-in-out forwards;
+            font-size: 130px;
+            animation: floatUpSlow 5s ease-in-out forwards;
         }
+
         .lotus-text {
-            margin-top: 20px;
+            margin-top: 40px;
             color: #FF69B4;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             font-weight: bold;
-            font-size: 20px;
-            animation: fadeIn 2s;
+            font-size: 26px;
+            letter-spacing: 2px;
+            text-align: center;
+            animation: fadeInText 2.5s ease-out 1s both;
         }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         </style>
         
         <div class="lotus-overlay">
             <div class="lotus-icon">🪷</div>
-            <div class="lotus-text">Đang khởi tạo AlkaLotus Predictor...</div>
+            <div class="lotus-text">CHÀO MỪNG ĐẾN HỆ THỐNG ALKALOTUS PREDICTOR</div>
         </div>
         """,
         unsafe_allow_html=True
     )
-    time.sleep(3) # Hiệu ứng chạy trong 3 giây
+    time.sleep(5) # Chờ 5 giây để hiệu ứng bay hết màn hình
 
-# Xóa hiệu ứng sau khi chạy xong để hiện nội dung chính
 intro_placeholder.empty()
 
-# Giao diện CSS
+# --- 3. GIAO DIỆN CSS CHÍNH ---
 st.markdown("""
     <style>
     .stApp { background-color: #FFFFFF !important; }
@@ -101,91 +111,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Khởi tạo dữ liệu
-if 'selected_compound' not in st.session_state:
-    st.session_state.selected_compound = "Roemerine"
-
-df = get_database()
-selected_data = df[df['Name'] == st.session_state.selected_compound].iloc[0]
-
-# SIDEBAR 
-st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-
-logo_paths = [
-    "AlkaLotus/Logo_HungVuong.png.png", 
-    "Logo_HungVuong.png.png",
-    "AlkaLotus/Logo_HungVuong.png",
-    "Logo_HungVuong.png"
-]
-
-logo_found = False
-for path in logo_paths:
-    if os.path.exists(path):
-        st.sidebar.image(path, width=130)
-        logo_found = True
-        break
-
-if not logo_found:
-    github_logo_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png.png"
-    st.sidebar.image(github_logo_url, width=130)
-
-st.sidebar.markdown(
-    """
-    <p style='font-size: 1em; font-weight: bold; color: #2E2E2E; margin-top: 5px; margin-bottom: 0px;'>
-        Trường THPT Chuyên Hùng Vương
-    </p>
-    <p style='font-size: 0.8em; color: #666;'>TP. HỒ CHÍ MINH</p>
-    """, 
-    unsafe_allow_html=True
-)
-st.sidebar.markdown("</div>", unsafe_allow_html=True)
-st.sidebar.divider()
-
-st.sidebar.title("🪷 ALKALOTUS PREDICTOR")
-st.sidebar.markdown("<div style='text-align: justify; font-size: 0.9em;'><b>Hệ thống tích hợp Machine Learning</b> để tối ưu hóa quy trình sàng lọc ảo và dự đoán dược tính.</div>", unsafe_allow_html=True)
-
-st.sidebar.divider()
-page = st.sidebar.radio(
-    "Danh mục hệ thống",
-    ["1. Thư viện Alkaloid", "2. Mô phỏng Docking 3D", "3. Phân tích & Xuất báo cáo", "4. AI Predictor (ML)"]
-)
-st.sidebar.divider()
-st.sidebar.caption("👨‍ Học sinh: **Quách Gia An & Nguyễn Lê Bách Hợp**")
-st.sidebar.caption("🏫 Đơn vị: **Lớp 10-K30 - THPT Chuyên Hùng Vương**")
-
-# --- MODULE 1: DATABASE EXPLORER (BẢN FIX LỖI KEYERROR) ---
-if page == "1. Thư viện Alkaloid":
-    st.title("📚 Thư viện số hóa Alkaloid")
-    
-
-    if 'MW' in df.columns:
-        df = df.rename(columns={'MW': 'Molecular Weight'})
-    
-    with st.expander("🔍 Bộ lọc sàng lọc thuốc (Lipinski Rule of 5)", expanded=True):
-        c1, c2, c3, c4 = st.columns(4)
-        mw_f = c1.checkbox("Molecular Weight < 500", value=True, help="Khối lượng phân tử (Dalton)")
-        lp_f = c2.checkbox("LogP < 5", value=True, help="Độ ưa dầu/nước")
-        hbd_f = c3.checkbox("H-Donor < 5", value=True, help="Số liên kết Hydrogen cho")
-        hba_f = c4.checkbox("H-Acceptor < 10", value=True, help="Số liên kết Hydrogen nhận")
-    
-    # Logic lọc dữ liệu động
-    filtered_df = df.copy()
-    
-    # Bây giờ Pandas đã hiểu 'Molecular Weight' là gì
-    if mw_f: 
-        filtered_df = filtered_df[filtered_df['Molecular Weight'] < 500]
-    if lp_f: 
-        filtered_df = filtered_df[filtered_df['LogP'] < 5]
-    if hbd_f: 
-        filtered_df = filtered_df[filtered_df['HBD'] < 5]
-    if hba_f: 
-        filtered_df = filtered_df[filtered_df['HBA'] < 10]
-    
-    # HIỂN THỊ BẢNG DỮ LIỆU
-    st.dataframe(
-        filtered_df[['Name', 'Formula', 'Molecular Weight', 'LogP', 'HBD', 'HBA']], 
-        use_container_width=True
-    )
+# --- 4. KHỞI TẠO DỮ LIỆU ---
+try:
+    from data import get_database
+    df = get_database()
+except ImportError:
+    # Backup nếu không tìm thấy file data.py (Dành cho chạy test)
+    df = pd.DataFrame({
 
     # --- TÍNH NĂNG 1: HEATMAP PHÂN TÍCH TỔNG QUAN ---
     st.markdown("### 🌡️ Phân tích Ái lực liên kết Tổng quát")
