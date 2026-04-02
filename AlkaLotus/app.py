@@ -3,9 +3,13 @@ import pandas as pd
 import joblib
 import numpy as np
 import time
-import os  # <--- PHẢI CÓ DÒNG NÀY ĐỂ FIX LỖI TRÊN ẢNH
+import os
 import plotly.express as px
 from stmol import showmol
+from data import get_database
+from utils import fetch_pdb, render_3d_molecule, check_lipinski, create_admet_radar, classify_potential
+
+
 
 # --- 1. CẤU HÌNH TRANG ---
 st.set_page_config(
