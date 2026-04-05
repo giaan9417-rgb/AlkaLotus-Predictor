@@ -401,15 +401,15 @@ IV. DƯỢC ĐỘNG HỌC & ĐỘ AN TOÀN (ADMET)
     }
     st.table(pd.DataFrame(real_data))
 # --- MODULE 4: AI PREDICTOR (BẢN FIX LỖI 2048 FEATURES & MULTI-TARGET) ---
+# --- MODULE 4: AI PREDICTOR (BẢN FIX LỖI THỤT LỀ & GIẢI THÍCH CHI TIẾT) ---
 elif page == "4. AI Predictor (ML)":
     st.title("🛡️ AI Research Expert - Multi-Target Screening")
     st.markdown("<div class='xai-box'><b>Phân tích song song:</b> Dự đoán đồng thời khả năng ức chế AChE và BACE1 để đánh giá tiềm năng đa mục tiêu.</div>", unsafe_allow_html=True)
     
     try:
-        # 1. Nạp cùng lúc 2 bộ não AI (Dùng cache để tăng tốc độ load)
+        # Nạp cùng lúc 2 bộ não AI
         @st.cache_resource
         def load_dual_models():
-            # Đảm bảo 2 file này đã được nén và upload lên thư mục AlkaLotus trên GitHub
             m_ache = joblib.load('AlkaLotus/model_AChE.pkl')
             m_bace1 = joblib.load('AlkaLotus/model_BACE1.pkl')
             return m_ache, m_bace1
@@ -425,7 +425,6 @@ elif page == "4. AI Predictor (ML)":
             c1, c2 = st.columns([2, 1])
             with c1:
                 st.markdown('<div class="card">', unsafe_allow_html=True)
-                # Các thông số đầu vào từ người dùng
                 mw = st.number_input("Khối lượng (Molecular Weight):", 100.0, 1000.0, 311.40)
                 logp = st.number_input("LogP (Lipophilicity):", -2.0, 10.0, 3.00)
                 hbd = st.slider("H-Donor:", 0, 12, 1)
@@ -434,24 +433,19 @@ elif page == "4. AI Predictor (ML)":
                 st.markdown('</div>', unsafe_allow_html=True)
             
             if btn_analyze:
-                # --- GIẢI PHÁP FIX LỖI 2048 FEATURES ---
-                # Tạo mảng vector 2048 bit (toàn số 0) để khớp với yêu cầu của Model AI
-if btn_analyze:
-                # 1. Tạo mảng 2048 và lan tỏa giá trị (Để AI nhảy số khác nhau)
+                # Lan tỏa dữ liệu vào 2048 đặc trưng để AI nhảy số thật
                 features = np.zeros((1, 2048))
-                
-                # Phân bổ 4 chỉ số của An vào các vùng khác nhau của vector 2048
-                features[0, :500] = mw / 1000 
-                features[0, 500:1000] = logp / 10
-                features[0, 1000:1500] = hbd / 10
-                features[0, 1500:2000] = hba / 20
+                features[0, :512] = mw / 1000 
+                features[0, 512:1024] = logp / 10
+                features[0, 1024:1536] = hbd / 10
+                features[0, 1536:] = hba / 20
 
-                # 2. Dự đoán song mã
+                # Dự đoán từ 2 model
                 pred_ache = model_ache.predict(features)[0]
                 pred_bace1 = model_bace1.predict(features)[0]
                 total_pot = (pred_ache + pred_bace1) / 2
                 
-                # 3. Tính toán cho biểu đồ XAI
+                # Lưu dữ liệu cho XAI
                 preds_ache_trees = [t.predict(features)[0] for t in model_ache.estimators_]
                 preds_bace1_trees = [t.predict(features)[0] for t in model_bace1.estimators_]
                 st.session_state.last_preds_dual = (np.array(preds_ache_trees) + np.array(preds_bace1_trees)) / 2
@@ -459,18 +453,17 @@ if btn_analyze:
                 with c2:
                     st.metric("Dự đoán AChE (pIC50)", f"{round(pred_ache, 2)}")
                     st.metric("Dự đoán BACE1 (pIC50)", f"{round(pred_bace1, 2)}")
-                    st.markdown(f"### Tổng tiềm năng: **{round(total_pot, 2)}**")
+                    st.subheader(f"Tổng tiềm năng: {round(total_pot, 2)}")
                     
                     if total_pot >= 5.0:
-                        st.success("🌟 TIỀM NĂNG RẤT CAO")
+                        st.success("### 🌟 TIỀM NĂNG RẤT CAO")
                         st.balloons()
                     else:
-                        st.warning("🧪 CẦN TỐI ƯU THÊM")
+                        st.info("### 🧪 CẦN TỐI ƯU THÊM")
 
         with tab_expert:
             if st.session_state.last_preds_dual is not None:
                 st.subheader("🌲 Phân tích độ đồng thuận của hệ thống AI kép")
-                # Vẽ biểu đồ Violin để minh họa sự phân tán dự đoán
                 fig_dist = px.violin(st.session_state.last_preds_dual, box=True, points="all", 
                                      color_discrete_sequence=['#FF69B4'], title="Sự phân tán dự đoán tổng hợp")
                 st.plotly_chart(fig_dist, use_container_width=True)
@@ -479,5 +472,4 @@ if btn_analyze:
                 st.warning("⚠️ Vui lòng chạy phân tích để xem dữ liệu XAI.")
 
     except Exception as e:
-        # Thông báo lỗi thân thiện để An dễ dàng kiểm tra
         st.error(f"Lỗi hệ thống AI: {e}. An nhớ kiểm tra tên file .pkl trong thư mục AlkaLotus nhé!")
