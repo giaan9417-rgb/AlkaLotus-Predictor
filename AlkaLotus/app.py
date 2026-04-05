@@ -527,11 +527,6 @@ elif page == "4. AI Predictor (ML)":
                     })
                     fig_dist = px.histogram(dist_data, x="pIC50", color="Set", barmode="overlay", title="Phân bố pIC50 sau Split")
                     st.plotly_chart(fig_dist, use_container_width=True)
-                with col_s2:
-                    st.info("""
-                    **Bằng chứng chống học vẹt:** Mô hình đạt R²=0.71 trên tập Test gồm các khung xương (Scaffold) hoàn toàn mới. 
-                    Điều này chứng minh AI của An & Bách Hợp có khả năng **suy luận hóa học** thay vì chỉ ghi nhớ cấu trúc.
-                    """)
             else:
                 st.info("👋 Hãy thực hiện dự đoán để AI xuất báo cáo chuyên sâu.")
 
