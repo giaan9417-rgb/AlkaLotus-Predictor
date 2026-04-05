@@ -412,7 +412,7 @@ elif page == "4. AI Predictor (ML)":
         c_m3.metric("Phương pháp", "5-Fold CV", "Random Forest")
         st.info("""
         **Ghi chú kỹ thuật:** Mô hình sử dụng cấu trúc **ECFP4 Fingerprint (2048-bit)** được huấn luyện trên 
-        tập dữ liệu chuẩn hóa từ ChEMBL (>2000 mẫu). 7 hợp chất trong thư viện chỉ là mẫu đối chứng thực nghiệm.
+        tập dữ liệu chuẩn hóa từ ChEMBL (>2000 mẫu). 7 hợp chất trong thư viện chỉ là mẫu đối chứng nhóm đã nghiên cứu in silico.
         """)
 
     st.markdown("---")
