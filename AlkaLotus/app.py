@@ -402,21 +402,29 @@ IV. DƯỢC ĐỘNG HỌC & ĐỘ AN TOÀN (ADMET)
     st.table(pd.DataFrame(real_data))
 # --- MODULE 4: AI PREDICTOR (BẢN FIX LỖI THỤT LỀ & GIẢI THÍCH CHI TIẾT) ---
 elif page == "4. AI Predictor (ML)":
-    st.title("🛡️ AI Research Expert - Molecular Screening")
-    st.markdown("<div class='xai-box'><b>Phân tích đa tầng XAI:</b> Sử dụng Explainable AI để minh bạch hóa dự đoán và đánh giá độ tin cậy.</div>", unsafe_allow_html=True)
+    st.title("🛡️ AI Research Expert - Multi-Target Screening")
+    st.markdown("<div class='xai-box'><b>Phân tích song song:</b> Dự đoán đồng thời khả năng ức chế AChE và BACE1 để đánh giá tiềm năng đa mục tiêu.</div>", unsafe_allow_html=True)
     
     try:
-        model_ai = joblib.load('AlkaLotus/alkmer_model.pkl')
+        # Nạp cùng lúc 2 bộ não AI
+        @st.cache_resource
+        def load_dual_models():
+            m_ache = joblib.load('AlkaLotus/model_AChE.pkl')
+            m_bace1 = joblib.load('AlkaLotus/model_BACE1.pkl')
+            return m_ache, m_bace1
+            
+        model_ache, model_bace1 = load_dual_models()
         
-        if 'last_preds' not in st.session_state:
-            st.session_state.last_preds = None
+        if 'last_preds_dual' not in st.session_state:
+            st.session_state.last_preds_dual = None
 
-        tab_main, tab_expert = st.tabs(["🎯 Dự đoán & Đánh giá", "🧠 Phân tích XAI Chuyên sâu"])
+        tab_main, tab_expert = st.tabs(["🎯 Dự đoán song mã", "🧠 Phân tích XAI Chuyên sâu"])
         
         with tab_main:
             c1, c2 = st.columns([2, 1])
             with c1:
                 st.markdown('<div class="card">', unsafe_allow_html=True)
+                # Input vẫn giữ nguyên vì Fingerprint dùng chung cho cả 2 model
                 mw = st.number_input("Khối lượng (Molecular Weight):", 100.0, 1000.0, 311.40)
                 logp = st.number_input("LogP (Lipophilicity):", -2.0, 10.0, 3.00)
                 hbd = st.slider("H-Donor:", 0, 12, 1)
@@ -426,67 +434,38 @@ elif page == "4. AI Predictor (ML)":
             
             if btn_analyze:
                 features = np.array([[mw, logp, hbd, hba]])
-                pred_dg = model_ai.predict(features)[0]
                 
-                all_tree_preds = [tree.predict(features)[0] for tree in model_ai.estimators_]
-                st.session_state.last_preds = all_tree_preds 
+                # Dự đoán từ 2 model
+                pred_ache = model_ache.predict(features)[0]
+                pred_bace1 = model_bace1.predict(features)[0]
+                total_pot = (pred_ache + pred_bace1) / 2
                 
-                std_dev = np.std(all_tree_preds)
-                confidence_val = max(0, min(100, 100 - (std_dev * 15)))
-                st.session_state.conf_score = confidence_val
-                
-                violations = sum([mw > 500, logp > 5, hbd > 5, hba > 10])
-                safety_score = 100 - (violations * 25)
+                # Lưu dữ liệu cho XAI (lấy trung bình của 2 model để vẽ Violin)
+                preds_ache_trees = [t.predict(features)[0] for t in model_ache.estimators_]
+                preds_bace1_trees = [t.predict(features)[0] for t in model_bace1.estimators_]
+                st.session_state.last_preds_dual = (np.array(preds_ache_trees) + np.array(preds_bace1_trees)) / 2
 
                 with c2:
-                    st.metric("AI Dự đoán ΔG", f"{round(pred_dg, 2)} kcal/mol")
-                    st.metric("AI Confidence Score", f"{round(confidence_val, 1)}%")
-                    st.metric("Drug-likeness", f"{safety_score}%")
+                    st.metric("Dự đoán AChE (pIC50)", f"{round(pred_ache, 2)}")
+                    st.metric("Dự đoán BACE1 (pIC50)", f"{round(pred_bace1, 2)}")
+                    st.subheader(f"Tổng tiềm năng: {round(total_pot, 2)}")
                     
-                    if safety_score < 75:
-                        st.error("### 🛑 KÉM KHẢ THI") 
-                    elif pred_dg <= -8.0:
+                    if total_pot >= 5.0:
                         st.success("### 🌟 TIỀM NĂNG RẤT CAO")
                         st.balloons()
                     else:
                         st.info("### 🧪 CẦN TỐI ƯU THÊM")
 
         with tab_expert:
-            st.subheader("🔬 Giải thích cơ chế dự đoán (Feature Importance)")
-            importances = model_ai.feature_importances_
-            labels = ['MW', 'LogP', 'H-Donor', 'H-Acceptor']
-            imp_df = pd.DataFrame({'Yếu tố': labels, 'Mức độ ảnh hưởng (%)': importances * 100})
-            fig_xai = px.bar(imp_df, x='Mức độ ảnh hưởng (%)', y='Yếu tố', orientation='h', color_discrete_sequence=['#FF69B4'])
-            st.plotly_chart(fig_xai, use_container_width=True)
-
-            st.subheader("🌲 Sự phân tán của các cây quyết định (Confidence Visualization)")
-            if st.session_state.last_preds is not None:
-                fig_dist = px.violin(st.session_state.last_preds, box=True, points="all", 
-                                     color_discrete_sequence=['#FF69B4'])
+            if st.session_state.last_preds_dual is not None:
+                st.subheader("🌲 Phân tích độ đồng thuận của hệ thống AI kép")
+                fig_dist = px.violin(st.session_state.last_preds_dual, box=True, points="all", 
+                                     color_discrete_sequence=['#FF69B4'], title="Sự phân tán dự đoán tổng hợp")
                 st.plotly_chart(fig_dist, use_container_width=True)
                 
-                # --- PHẦN GIẢI THÍCH CHI TIẾT (ĐÃ THỤT LỀ CHUẨN) ---
-                with st.expander("🔬 HƯỚNG DẪN ĐỌC HIỂU PHÂN TÍCH ĐỘ TIN CẬY (XAI)", expanded=True):
-                    st.markdown(f"""
-                    ### 🔍 Giải mã biểu đồ "Đàn bầu" (Violin Plot)
-                    Hệ thống **AlkaLotus** sử dụng mô hình *Random Forest* với 100 cây quyết định. Biểu đồ này minh bạch hóa sự "tranh luận" giữa 100 thực thể đó.
-                    
-                    ---
-                    #### 1️⃣ Ý nghĩa của hình dáng biểu đồ
-                    * **Phần bụng phình to nhất:** Đại diện cho vùng **Đồng thuận cao**. Đa số các cây đều dự đoán quanh mức **{round(np.median(st.session_state.last_preds), 2)} kcal/mol**.
-                    * **Độ dài biểu đồ:** Thể hiện dải sai số. Biểu đồ càng ngắn, kết quả càng ít biến động và tin cậy hơn.
-                    * **Dấu chấm hồng:** Là kết quả riêng lẻ của 1 trong 100 cây quyết định.
-                    
-                    #### 2️⃣ Các chỉ số từ Boxplot (Khung giữa)
-                    * **Vạch trắng (Median):** Điểm trung vị, là con số đại diện cuối cùng cho ái lực liên kết.
-                    * **Khối hộp:** Chứa 50% lượng dự đoán tập trung nhất. Hộp càng hẹp, độ tự tin của AI càng cao.
-                    
-                    #### 3️⃣ Nhận định hệ thống
-                    * **Độ tin cậy:** :green[**{round(st.session_state.get('conf_score', 0), 1)}%**]
-                    * **Đánh giá:** Kết quả có tính ổn định cao, đủ điều kiện để định hướng các nghiên cứu chuyên sâu tiếp theo.
-                    """)
+                st.info("💡 Biểu đồ thể hiện mức độ tin cậy khi kết hợp cả hai mô hình AChE và BACE1.")
             else:
-                st.warning("⚠️ Vui lòng nhấn 'CHẠY PHÂN TÍCH HỆ THỐNG' ở tab Dự đoán để xem phân tích này.")
+                st.warning("⚠️ Vui lòng chạy phân tích để xem dữ liệu XAI.")
 
     except Exception as e:
-        st.error(f"Lỗi hệ thống AI: {e}")
+        st.error(f"Lỗi hệ thống AI: {e}. An nhớ kiểm tra tên file .pkl trong thư mục AlkaLotus nhé!")
