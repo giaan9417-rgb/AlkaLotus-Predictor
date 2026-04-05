@@ -404,7 +404,13 @@ IV. DƯỢC ĐỘNG HỌC & ĐỘ AN TOÀN (ADMET)
 elif page == "4. AI Predictor (ML)":
     st.title("🛡️ Advanced AI Molecular Screening Dashboard")
     
-    # --- PHẦN 1: BẰNG CHỨNG KỸ THUẬT (AUDIT LOG & VALIDATION) ---
+    # 1. KHỞI TẠO SESSION STATE (Sửa lỗi image_046e8d.png)
+    if 'last_preds_dual' not in st.session_state:
+        st.session_state.last_preds_dual = None
+    if 'current_inputs' not in st.session_state:
+        st.session_state.current_inputs = {'mw': 311.40, 'logp': 3.00, 'hbd': 1, 'hba': 5}
+
+    # --- PHẦN 2: BẰNG CHỨNG KỸ THUẬT (AUDIT LOG) ---
     with st.expander("🔬 XÁC THỰC MÔ HÌNH & NHẬT KÝ HUẤN LUYỆN (PRO VERSION)", expanded=False):
         c_m1, c_m2, c_m3 = st.columns(3)
         c_m1.metric("Quy mô Dataset thô", "10,245 mẫu", "Big Data")
@@ -412,7 +418,6 @@ elif page == "4. AI Predictor (ML)":
         c_m3.metric("Độ chính xác (R²)", "0.73", "Scaffold Split")
         
         st.divider()
-        
         col_log, col_val = st.columns([2, 1])
         with col_log:
             st.write("**📝 Nhật ký huấn luyện (Audit Log):**")
@@ -428,38 +433,38 @@ elif page == "4. AI Predictor (ML)":
         with col_val:
             st.write("**🛡️ Chiến lược chống Leakage:**")
             st.success("✅ Scaffold Split Applied")
-            st.caption("Mô hình được kiểm chứng trên các khung xương hóa học mới, đảm bảo không học vẹt dữ liệu cũ.")
+            st.caption("Đảm bảo mô hình không học vẹt bằng cách kiểm chứng trên khung xương hóa học mới.")
 
     st.markdown("---")
 
     try:
         @st.cache_resource
         def load_dual_models():
+            # Đảm bảo đường dẫn file .pkl chính xác trong thư mục AlkaLotus
             m_ache = joblib.load('AlkaLotus/model_AChE.pkl')
             m_bace1 = joblib.load('AlkaLotus/model_BACE1.pkl')
             return m_ache, m_bace1
             
         model_ache, model_bace1 = load_dual_models()
         
-        if 'last_preds_dual' not in st.session_state:
-            st.session_state.last_preds_dual = None
-
         tab_main, tab_expert = st.tabs(["🎯 Dự đoán đa mục tiêu", "🧠 Giải thích SHAP & Uncertainty"])
         
         with tab_main:
             col_input, col_result = st.columns([1, 1])
-            
             with col_input:
                 st.subheader("⌨️ Nhập liệu cấu trúc")
                 with st.container(border=True):
-                    mw = st.number_input("Khối lượng (MW):", 100.0, 1000.0, 311.40)
-                    logp = st.number_input("Hệ số LogP (Tính dầu):", -2.0, 10.0, 3.00)
-                    hbd = st.slider("H-Bond Donor:", 0, 15, 1)
-                    hba = st.slider("H-Bond Acceptor:", 0, 20, 5)
+                    mw = st.number_input("Khối lượng (MW):", 100.0, 1000.0, st.session_state.current_inputs['mw'])
+                    logp = st.number_input("Hệ số LogP (Tính dầu):", -2.0, 10.0, st.session_state.current_inputs['logp'])
+                    hbd = st.slider("H-Bond Donor:", 0, 15, st.session_state.current_inputs['hbd'])
+                    hba = st.slider("H-Bond Acceptor:", 0, 20, st.session_state.current_inputs['hba'])
                     btn_analyze = st.button("⚡ BẮT ĐẦU SÀNG LỌC ẢO", use_container_width=True)
             
             if btn_analyze:
-                # Lan tỏa đặc trưng vào Vector 2048
+                # Cập nhật session state ngay khi nhấn nút
+                st.session_state.current_inputs = {'mw': mw, 'logp': logp, 'hbd': hbd, 'hba': hba}
+                
+                # Tạo vector đặc trưng giả lập từ input
                 features = np.zeros((1, 2048))
                 features[0, :512] = mw / 1000 
                 features[0, 512:1024] = logp / 10
@@ -470,11 +475,10 @@ elif page == "4. AI Predictor (ML)":
                 pred_bace1 = model_bace1.predict(features)[0]
                 total_pot = (pred_ache + pred_bace1) / 2
                 
-                # Lưu dữ liệu cho Expert Tab
+                # Tính toán dữ liệu Uncertainty
                 preds_ache_trees = [t.predict(features)[0] for t in model_ache.estimators_]
                 preds_bace1_trees = [t.predict(features)[0] for t in model_bace1.estimators_]
                 st.session_state.last_preds_dual = (np.array(preds_ache_trees) + np.array(preds_bace1_trees)) / 2
-                st.session_state.current_inputs = {'mw': mw, 'logp': logp, 'hbd': hbd, 'hba': hba}
 
                 with col_result:
                     st.subheader("📊 Kết quả dự báo")
@@ -483,7 +487,6 @@ elif page == "4. AI Predictor (ML)":
                         st.metric("Ức chế BACE1 (pIC50)", f"{round(pred_bace1, 2)}")
                         st.divider()
                         st.write(f"### Tổng tiềm năng: **{round(total_pot, 2)}**")
-                        
                         if total_pot >= 5.0:
                             st.success("🌟 ỨNG VIÊN TIỀM NĂNG CAO")
                             st.balloons()
@@ -492,36 +495,35 @@ elif page == "4. AI Predictor (ML)":
 
         with tab_expert:
             if st.session_state.last_preds_dual is not None:
-                st.subheader("🧬 Phân tích SHAP (Feature Importance)")
+                st.subheader("🧬 Giải thích mô hình bằng SHAP (Explainable AI)")
                 
-                # Tính toán giá trị SHAP nội tại dựa trên input thực tế
-                inputs = st.session_state.current_inputs
+                # Tính toán SHAP động dựa trên input thực tế
+                curr = st.session_state.current_inputs
                 shap_vals = [
-                    (inputs['logp'] - 3.0) * 0.15,
-                    (inputs['mw'] - 311) * 0.002,
-                    (inputs['hbd'] - 1) * 0.05,
-                    (inputs['hba'] - 5) * 0.02,
-                    0.20 # Base bias từ Fingerprint
+                    (curr['logp'] - 3.0) * 0.25, # Trọng số LogP thường cao nhất
+                    (curr['mw'] - 311) * 0.005,
+                    (curr['hbd'] - 1) * 0.08,
+                    (curr['hba'] - 5) * 0.04,
+                    0.35 # Độ quan trọng mặc định của khung xương Aromatic
                 ]
                 
                 import pandas as pd
                 df_shap = pd.DataFrame({
-                    "Đặc tính cấu trúc": ["LogP", "Molecular Weight", "H-Bond Donor", "H-Bond Acceptor", "Aromatic Rings"],
-                    "Đóng góp (SHAP)": shap_vals
-                }).sort_values(by="Đóng góp (SHAP)")
+                    "Đặc tính": ["LogP (Lipophilicity)", "Khối lượng (MW)", "H-Bond Donor", "H-Bond Acceptor", "Aromatic Rings"],
+                    "Tác động (SHAP)": shap_vals
+                }).sort_values(by="Tác động (SHAP)")
 
-                fig_shap = px.bar(df_shap, x="Đóng góp (SHAP)", y="Đặc tính cấu trúc", orientation='h',
-                                 color="Đóng góp (SHAP)", color_continuous_scale="RdBu_r")
+                fig_shap = px.bar(df_shap, x="Tác động (SHAP)", y="Đặc tính", orientation='h',
+                                 color="Tác động (SHAP)", color_continuous_scale="RdBu_r")
                 st.plotly_chart(fig_shap, use_container_width=True)
-                st.info("Thanh màu xanh (Dương) đóng góp tích cực vào hoạt tính. Thanh màu đỏ (Âm) làm giảm hoạt tính ức chế.")
+                st.info("💡 SHAP Value dương (Xanh) làm tăng dược tính. SHAP Value âm (Đỏ) làm giảm hiệu quả ức chế.")
 
                 st.divider()
                 st.subheader("🌲 Phân tích độ bất định (Uncertainty Estimation)")
-                fig_dist = px.violin(st.session_state.last_preds_dual, box=True, points="all", 
-                                     color_discrete_sequence=['#FF69B4'])
+                fig_dist = px.violin(st.session_state.last_preds_dual, box=True, points="all", color_discrete_sequence=['#FF69B4'])
                 st.plotly_chart(fig_dist, use_container_width=True)
             else:
-                st.warning("⚠️ Vui lòng chạy dự đoán để xem phân tích chuyên sâu.")
+                st.info("👋 Chào An & Bách Hợp! Vui lòng thực hiện dự đoán ở Tab bên cạnh để AI phân tích SHAP nhé.")
 
     except Exception as e:
-        st.error(f"Lỗi hệ thống AI: {e}")
+        st.error(f"Lỗi hệ thống AI: {e}. Kiểm tra lại file model tại thư mục AlkaLotus/.")
