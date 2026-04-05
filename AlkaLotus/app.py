@@ -436,25 +436,22 @@ elif page == "4. AI Predictor (ML)":
             if btn_analyze:
                 # --- GIẢI PHÁP FIX LỖI 2048 FEATURES ---
                 # Tạo mảng vector 2048 bit (toàn số 0) để khớp với yêu cầu của Model AI
-                if btn_analyze:
-                # Tạo mảng 2048 nhưng thay vì toàn số 0, ta lan tỏa giá trị ra
-                # để AI nhận diện được sự thay đổi rõ rệt hơn
+if btn_analyze:
+                # 1. Tạo mảng 2048 và lan tỏa giá trị (Để AI nhảy số khác nhau)
                 features = np.zeros((1, 2048))
                 
-                # Lan tỏa MW vào 500 vị trí đầu
+                # Phân bổ 4 chỉ số của An vào các vùng khác nhau của vector 2048
                 features[0, :500] = mw / 1000 
-                # Lan tỏa LogP vào 500 vị trí tiếp theo
                 features[0, 500:1000] = logp / 10
-                # Lan tỏa HBD/HBA vào phần còn lại
                 features[0, 1000:1500] = hbd / 10
                 features[0, 1500:2000] = hba / 20
 
-                # Giờ thì dự đoán sẽ thay đổi theo từng đơn vị An nhập!
+                # 2. Dự đoán song mã
                 pred_ache = model_ache.predict(features)[0]
                 pred_bace1 = model_bace1.predict(features)[0]
                 total_pot = (pred_ache + pred_bace1) / 2
                 
-                # Tính toán dữ liệu cho biểu đồ XAI (Độ đồng thuận của các cây quyết định)
+                # 3. Tính toán cho biểu đồ XAI
                 preds_ache_trees = [t.predict(features)[0] for t in model_ache.estimators_]
                 preds_bace1_trees = [t.predict(features)[0] for t in model_bace1.estimators_]
                 st.session_state.last_preds_dual = (np.array(preds_ache_trees) + np.array(preds_bace1_trees)) / 2
@@ -462,13 +459,13 @@ elif page == "4. AI Predictor (ML)":
                 with c2:
                     st.metric("Dự đoán AChE (pIC50)", f"{round(pred_ache, 2)}")
                     st.metric("Dự đoán BACE1 (pIC50)", f"{round(pred_bace1, 2)}")
-                    st.markdown(f"### Tổng tiềm năng: <span style='color:#FF69B4'>{round(total_pot, 2)}</span>", unsafe_allow_html=True)
+                    st.markdown(f"### Tổng tiềm năng: **{round(total_pot, 2)}**")
                     
                     if total_pot >= 5.0:
-                        st.success("### 🌟 TIỀM NĂNG RẤT CAO")
+                        st.success("🌟 TIỀM NĂNG RẤT CAO")
                         st.balloons()
                     else:
-                        st.warning("### 🧪 CẦN TỐI ƯU THÊM")
+                        st.warning("🧪 CẦN TỐI ƯU THÊM")
 
         with tab_expert:
             if st.session_state.last_preds_dual is not None:
