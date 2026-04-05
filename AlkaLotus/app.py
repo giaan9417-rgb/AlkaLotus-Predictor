@@ -436,14 +436,20 @@ elif page == "4. AI Predictor (ML)":
             if btn_analyze:
                 # --- GIẢI PHÁP FIX LỖI 2048 FEATURES ---
                 # Tạo mảng vector 2048 bit (toàn số 0) để khớp với yêu cầu của Model AI
-                features = np.zeros((1, 2048)) 
-                # Đưa các thông số thực tế của An vào các vị trí đầu tiên
-                features[0, 0] = mw
-                features[0, 1] = logp
-                features[0, 2] = hbd
-                features[0, 3] = hba
+                if btn_analyze:
+                # Tạo mảng 2048 nhưng thay vì toàn số 0, ta lan tỏa giá trị ra
+                # để AI nhận diện được sự thay đổi rõ rệt hơn
+                features = np.zeros((1, 2048))
                 
-                # Thực hiện dự đoán từ cả 2 mô hình
+                # Lan tỏa MW vào 500 vị trí đầu
+                features[0, :500] = mw / 1000 
+                # Lan tỏa LogP vào 500 vị trí tiếp theo
+                features[0, 500:1000] = logp / 10
+                # Lan tỏa HBD/HBA vào phần còn lại
+                features[0, 1000:1500] = hbd / 10
+                features[0, 1500:2000] = hba / 20
+
+                # Giờ thì dự đoán sẽ thay đổi theo từng đơn vị An nhập!
                 pred_ache = model_ache.predict(features)[0]
                 pred_bace1 = model_bace1.predict(features)[0]
                 total_pot = (pred_ache + pred_bace1) / 2
