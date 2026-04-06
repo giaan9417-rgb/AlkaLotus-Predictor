@@ -229,10 +229,15 @@ if page == "1. Thư viện Alkaloid":
 
     st.divider()
 
-    # --- CHỌN HỢP CHẤT MỤC TIÊU ---
+    # --- CHỌN HỢP CHẤT MỤC TIÊU (ĐÃ FIX LỖI ĐỒNG BỘ) ---
     st.subheader("🎯 Chọn đối tượng nghiên cứu")
     compounds = df['Name'].tolist()
-    current_idx = compounds.index(st.session_state.selected_compound) if st.session_state.selected_compound in compounds else 0
+    
+    # Đoạn fix lỗi: Kiểm tra nếu chất trong session_state không còn tồn tại trong list mới
+    if st.session_state.selected_compound not in compounds:
+        st.session_state.selected_compound = compounds[0]
+        
+    current_idx = compounds.index(st.session_state.selected_compound)
     
     choice = st.selectbox("Chọn hợp chất để chuyển tiếp dữ liệu sang Module 3D và AI:", 
                           compounds, index=current_idx)
@@ -240,6 +245,7 @@ if page == "1. Thư viện Alkaloid":
     if choice != st.session_state.selected_compound:
         st.session_state.selected_compound = choice
         st.success(f"Đã chọn **{choice}**. Dữ liệu đã sẵn sàng ở các Module sau!")
+        st.rerun() # Quan trọng: Ép app load lại để Module 2 nhận chất mới ngay lập tức
 # --- MODULE 2: VIRTUAL DOCKING LAB (BẢN NÂNG CẤP GIAO DIỆN) ---
 elif page == "2. Mô phỏng Docking 3D":
     st.title("🔬 Virtual Docking Lab (In Silico)")
@@ -261,14 +267,24 @@ elif page == "2. Mô phỏng Docking 3D":
         st.divider()
         st.caption("Dữ liệu trích xuất từ Bảng 2 & Chương 2 - Báo cáo Nghiên cứu 2026.")
 
-    # [Dữ liệu alkaloid_db và controls giữ nguyên như code của An]
-    alkaloid_db = { ... } # Giữ nguyên database của An
-    controls = { ... }    # Giữ nguyên database của An
+    # DATABASE GỐC CỦA AN (Đảm bảo được đặt ở đây để không bao giờ bị None)
+    alkaloid_db = {
+        "Nuciferine": {"BACE1": {"dg": -8.3, "amin": "Asp32", "stab": 75}, "AChE": {"dg": -8.2, "amin": "Trp286", "stab": 70}},
+        "Nornuciferine": {"BACE1": {"dg": -8.3, "amin": "Gly120", "stab": 72}, "AChE": {"dg": -8.1, "amin": "Tyr124", "stab": 68}},
+        "Roemerine": {"BACE1": {"dg": -9.0, "amin": "Asp32/Asp228", "stab": 88}, "AChE": {"dg": -8.6, "amin": "Trp286", "stab": 90}},
+        "Pronuciferine": {"BACE1": {"dg": -8.6, "amin": "Ser203", "stab": 78}, "AChE": {"dg": -8.6, "amin": "Phe338", "stab": 80}},
+        "Liensinine": {"BACE1": {"dg": -9.6, "amin": "Asp32", "stab": 95}, "AChE": {"dg": -7.5, "amin": "His447", "stab": 65}},
+        "Neferine": {"BACE1": {"dg": -9.0, "amin": "Tyr124", "stab": 85}, "AChE": {"dg": -7.5, "amin": "Trp286", "stab": 62}},
+        "Isoliensinine": {"BACE1": {"dg": -9.6, "amin": "Asp32/Asp228", "stab": 96}, "AChE": {"dg": -7.7, "amin": "Trp286", "stab": 72}}
+    }
+    controls = {
+        "BACE1": {"name": "Verubecestat", "dg": -8.5},
+        "AChE": {"name": "Donepezil", "dg": -7.9}
+    }
 
     tab_view, tab_compare = st.tabs(["🔍 Chi tiết tương tác 3D", "⚖️ So sánh đối chứng (Benchmarking)"])
 
     with tab_view:
-        # HƯỚNG DẪN NHANH TRÊN ĐẦU TAB
         st.subheader("🖥️ Trình diễn tương tác phân tử")
         st.caption("Chọn mục tiêu và hợp chất để quan sát cách Alkaloid 'khóa' các Enzyme gây bệnh Alzheimer.")
 
@@ -276,8 +292,11 @@ elif page == "2. Mô phỏng Docking 3D":
         p_key = "BACE1" if "BACE1" in target else "AChE"
         pdb_id = "4XXS" if p_key == "BACE1" else "7D9O"
         
+        # ĐOẠN FIX LỖI TYPEERROR QUAN TRỌNG:
         selected = st.session_state.get('selected_compound', 'Roemerine')
-        if selected not in alkaloid_db: selected = "Roemerine"
+        if selected not in alkaloid_db:
+            selected = list(alkaloid_db.keys())[0] # Tự lấy chất đầu tiên nếu lỗi
+        
         data = alkaloid_db[selected][p_key]
 
         c1, c2 = st.columns([1, 2.5])
@@ -289,16 +308,12 @@ elif page == "2. Mô phỏng Docking 3D":
                 
                 st.divider()
                 st.markdown("**📊 Chỉ số năng lượng:**")
-                # Giải thích ΔG cho Ban giám khảo
                 st.metric("Năng lượng ΔG", f"{data['dg']} kcal/mol", 
                           help="Giá trị càng âm, liên kết càng bền vững và hiệu quả ức chế càng cao.")
                 
                 st.write(f"📍 **Acid amin chính:** `{data['amin']}`")
-                
-                # Thanh tiến độ độ bền
                 st.progress(data['stab']/100, text=f"Độ bền phức hợp: {data['stab']}%")
                 
-                # CHÚ THÍCH CƠ CHẾ DƯỢC LÝ
                 if "Asp32" in data['amin']:
                     st.success("🎯 **Cơ chế:** Khóa cặp Asp xúc tác, ngăn chặn hình thành mảng bám Amyloid.")
                 elif "Trp286" in data['amin']:
@@ -307,7 +322,6 @@ elif page == "2. Mô phỏng Docking 3D":
         with c2:
             with st.container(border=True):
                 with st.spinner("Đang kết nối thư viện PDB và kết xuất mô hình 3D..."):
-                    # [Logic render molecule của An]
                     pdb_string = fetch_pdb(pdb_id)
                     if pdb_string:
                         showmol(render_3d_molecule(pdb_string, highlight_site=hl), height=500, width=700)
@@ -321,8 +335,9 @@ elif page == "2. Mô phỏng Docking 3D":
         control_data = controls[comp_p]
         
         with st.container(border=True):
+            # Đồng bộ lại selectbox đối chứng
             selected_comp = st.selectbox("Chọn Alkaloid để đối chứng:", list(alkaloid_db.keys()), 
-                                         index=list(alkaloid_db.keys()).index("Roemerine"))
+                                         index=list(alkaloid_db.keys()).index(selected) if selected in alkaloid_db else 0)
             
             user_dg = alkaloid_db[selected_comp][comp_p]['dg']
             
@@ -331,11 +346,9 @@ elif page == "2. Mô phỏng Docking 3D":
             col2.metric(f"Thuốc: {control_data['name']}", f"{control_data['dg']} kcal/mol", 
                         delta=round(user_dg - control_data['dg'], 2), delta_color="inverse")
             
-            # Giải thích ý nghĩa của Delta (Δ)
             if user_dg < control_data['dg']:
                 st.success(f"💡 **Phân tích:** {selected_comp} có năng lượng tự do thấp hơn, cho thấy ái lực liên kết mạnh hơn thuốc {control_data['name']}.")
             
-        # Biểu đồ trực quan
         st.markdown("#### Đồ thị so sánh ái lực (Affinity Comparison)")
         chart_data = pd.DataFrame({
             "Hợp chất": [selected_comp, control_data['name']],
