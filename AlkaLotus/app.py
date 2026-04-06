@@ -16,11 +16,11 @@ st.set_page_config(
 )
 
 # --- 2. ĐỊNH NGHĨA HƯỚNG DẪN SỬ DỤNG (DIALOG) ---
-@st.dialog("📖 HƯỚNG DẪN SỬ DỤNG HỆ THỐNG")
+@st.dialog("📖 GIỚI THIỆU TỔNG QUAN HỆ THỐNG")
 def show_user_guide():
     st.markdown("""
     ### 👋 Chào mừng bạn đến với AlkaLotus Predictor!
-    Hệ thống hỗ trợ sàng lọc ảo các hợp chất Alkaloid từ cây Sen trong điều trị Alzheimer.
+    Hệ thống hỗ trợ sàng lọc ảo các hợp chất Alkaloid từ cây Sen trong điều trị Alzheimer và tích hợp ML để dự đoán các hợp chất khác.
     
     **Các bước sử dụng chính:**
     1. **🏠 Thư viện Alkaloid:** Tra cứu dữ liệu cấu trúc hóa học có sẵn.
@@ -28,7 +28,7 @@ def show_user_guide():
     3. **📊 Phân tích & Xuất báo cáo:** Đánh giá quy tắc Lipinski và tải kết quả.
     4. **🛡️ AI Predictor (ML):** Dự đoán hoạt tính pIC50 bằng Machine Learning.
     
-    *Lưu ý: Bạn có thể mở lại hướng dẫn này bất cứ lúc nào tại thanh bên (Sidebar).*
+    *Lưu ý: Bạn có thể mở lại bảng này bất cứ lúc nào tại thanh bên (Sidebar).*
     """)
     if st.button("Bắt đầu ngay", use_container_width=True):
         st.rerun()
@@ -131,7 +131,7 @@ if 'selected_compound' not in st.session_state:
 # --- 5. SIDEBAR ---
 st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 
-# (Đoạn xử lý Logo giữ nguyên như code của An...)
+
 logo_paths = ["AlkaLotus/Logo_HungVuong.png.png", "Logo_HungVuong.png.png", "AlkaLotus/Logo_HungVuong.png", "Logo_HungVuong.png"]
 logo_found = False
 for path in logo_paths:
@@ -166,7 +166,7 @@ page = st.sidebar.radio(
 
 # NÚT MỞ LẠI HƯỚNG DẪN TRÊN SIDEBAR
 st.sidebar.divider()
-if st.sidebar.button("❓ Mở hướng dẫn sử dụng", use_container_width=True):
+if st.sidebar.button("❓ Mở bảng giới thiệu tổng quan", use_container_width=True):
     show_user_guide()
 
 st.sidebar.divider()
@@ -244,30 +244,30 @@ if page == "1. Thư viện Alkaloid":
         
         fig_heat.update_layout(height=350, margin=dict(l=20, r=20, t=20, b=20))
         st.plotly_chart(fig_heat, use_container_width=True)
-        st.info("💡 **Mẹo thuyết trình:** Hãy nhấn mạnh các chất có số âm lớn (màu hồng đậm) vì đó là những ứng viên có tiềm năng ức chế enzyme cao nhất.")
+        st.info("💡 Các chất có số âm lớn (màu hồng đậm) đó là những ứng viên có tiềm năng ức chế enzyme cao hơn.")
     else:
         st.warning("⚠️ Không có hợp chất nào thỏa mãn bộ lọc hiện tại. Hãy nới lỏng các điều kiện Lipinski.")
 
     st.divider()
 
-    # --- CHỌN HỢP CHẤT MỤC TIÊU (ĐÃ FIX LỖI ĐỒNG BỘ) ---
+    # --- CHỌN HỢP CHẤT MỤC TIÊU ---
     st.subheader("🎯 Chọn đối tượng nghiên cứu")
     compounds = df['Name'].tolist()
     
-    # Đoạn fix lỗi: Kiểm tra nếu chất trong session_state không còn tồn tại trong list mới
+    
     if st.session_state.selected_compound not in compounds:
         st.session_state.selected_compound = compounds[0]
         
     current_idx = compounds.index(st.session_state.selected_compound)
     
-    choice = st.selectbox("Chọn hợp chất để chuyển tiếp dữ liệu sang Module 3D và AI:", 
+    choice = st.selectbox("Chọn hợp chất để chuyển tiếp dữ liệu sang các Module khác:", 
                           compounds, index=current_idx)
     
     if choice != st.session_state.selected_compound:
         st.session_state.selected_compound = choice
         st.success(f"Đã chọn **{choice}**. Dữ liệu đã sẵn sàng ở các Module sau!")
-        st.rerun() # Quan trọng: Ép app load lại để Module 2 nhận chất mới ngay lập tức
-# --- MODULE 2: VIRTUAL DOCKING LAB (BẢN NÂNG CẤP GIAO DIỆN) ---
+        st.rerun() 
+# --- MODULE 2: VIRTUAL DOCKING LAB
 elif page == "2. Mô phỏng Docking 3D":
     st.title("🔬 Virtual Docking Lab (In Silico)")
 
@@ -288,7 +288,7 @@ elif page == "2. Mô phỏng Docking 3D":
         st.divider()
         st.caption("Dữ liệu trích xuất từ Bảng 2 & Chương 2 - Báo cáo Nghiên cứu 2026.")
 
-    # DATABASE GỐC CỦA AN (Đảm bảo được đặt ở đây để không bao giờ bị None)
+    
     alkaloid_db = {
         "Nuciferine": {"BACE1": {"dg": -8.3, "amin": "Asp32", "stab": 75}, "AChE": {"dg": -8.2, "amin": "Trp286", "stab": 70}},
         "Nornuciferine": {"BACE1": {"dg": -8.3, "amin": "Gly120", "stab": 72}, "AChE": {"dg": -8.1, "amin": "Tyr124", "stab": 68}},
@@ -649,6 +649,6 @@ elif page == "4. AI Predictor (ML)":
                     * **Violin Plot:** Độ phình thể hiện mật độ dữ liệu. Nếu hình dáng hai bên tương đồng, mô hình có khả năng suy luận tốt trên các khung xương mới lạ (Scaffold Split).
                     """)
             else:
-                st.info("👋 Chào An! Hãy thực hiện dự đoán để AI xuất báo cáo chuyên sâu.")
+                st.info("👋 Hãy thực hiện dự đoán để AI xuất báo cáo chuyên sâu.")
     except Exception as e:
         st.error(f"Lỗi hệ thống: {e}")
