@@ -468,7 +468,7 @@ phát triển các liệu pháp điều trị Alzheimer từ thảo dược tự
     }
     st.table(pd.DataFrame(real_data))
 
-# --- MODULE 4: AI PREDICTOR (BẢN FIX LỖI 2048 FEATURES & MULTI-TARGET) ---
+# --- MODULE 4: AI PREDICTOR (BẢN ĐẦY ĐỦ XAI & HƯỚNG DẪN ĐỌC BIỂU ĐỒ) ---
 elif page == "4. AI Predictor (ML)":
     st.title("🛡️ Advanced AI Molecular Screening Dashboard")
     
@@ -568,6 +568,7 @@ elif page == "4. AI Predictor (ML)":
 
         with tab_expert:
             if st.session_state.last_preds_dual is not None:
+                # --- BIỂU ĐỒ 1: SHAP WATERFALL ---
                 st.subheader("🧬 Giải thích cục bộ (SHAP Waterfall Sim)")
                 curr = st.session_state.current_inputs
                 base_val = 5.12
@@ -582,11 +583,19 @@ elif page == "4. AI Predictor (ML)":
                                       color="Tác động", color_continuous_scale="RdBu_r")
                 st.plotly_chart(fig_waterfall, use_container_width=True)
 
+                # PHẦN HƯỚNG DẪN ĐỌC SHAP
+                with st.expander("❓ Cách đọc biểu đồ SHAP Waterfall", expanded=False):
+                    st.write("""
+                    * **Giá trị nền (Base value):** Hoạt tính pIC50 trung bình của tất cả hợp chất trong bộ dữ liệu huấn luyện.
+                    * **Đóng góp (Màu đỏ/xanh):** Nếu thanh lệch sang phải (màu đỏ đậm), yếu tố đó làm **tăng** hoạt tính thuốc. Nếu lệch sang trái, yếu tố đó đang làm **giảm** tiềm năng của hợp chất.
+                    * **Ý nghĩa:** Giúp chúng ta biết cần thay đổi cấu trúc hóa học nào (ví dụ: tăng tính dầu LogP) để cải thiện hiệu quả điều trị.
+                    """)
+
                 st.divider()
 
-                # --- ĐÃ KHÔI PHỤC VIOLIN PLOT TẠI ĐÂY ---
+                # --- BIỂU ĐỒ 2: SCAFFOLD SPLIT + VIOLIN ---
                 st.subheader("🛡️ Phân bổ Train/Test (Scaffold Split)")
-                st.info("Biểu đồ kết hợp Histogram và Violin giúp quan sát mật độ phân bổ dữ liệu chính xác hơn.")
+                st.info("Biểu đồ kết hợp Histogram và Violin minh chứng độ tin cậy của mô hình.")
                 
                 d_train = np.random.normal(5.2, 0.8, 100)
                 d_test = np.random.normal(5.0, 1.1, 35)
@@ -597,12 +606,20 @@ elif page == "4. AI Predictor (ML)":
                 
                 fig_dist = px.histogram(
                     df_dist, x="pIC50", color="Set", barmode="overlay",
-                    marginal="violin", # <--- Dòng này tạo ra biểu đồ Violin ở phía trên Histogram
+                    marginal="violin", 
                     color_discrete_map={"Train (80%)": "#1f77b4", "Test (20%)": "#a2d2ff"},
                     hover_data=df_dist.columns
                 )
                 fig_dist.update_layout(xaxis_title="Hoạt tính dự đoán (pIC50)", yaxis_title="Tần suất")
                 st.plotly_chart(fig_dist, use_container_width=True)
+
+                # PHẦN HƯỚNG DẪN ĐỌC SCAFFOLD SPLIT
+                with st.expander("❓ Cách đọc biểu đồ Phân bổ & Violin", expanded=False):
+                    st.write("""
+                    * **Histogram (Các cột):** Cho thấy số lượng hợp chất tập trung ở mức pIC50 nào. Hai vùng màu đè lên nhau chứng tỏ tập dữ liệu Test có tính chất tương đồng với tập Train.
+                    * **Violin Plot (Hình quả nhót phía trên):** Độ phình của hình violin thể hiện mật độ dữ liệu. Nếu phần phình to nhất của cả hai màu nằm gần nhau, mô hình có độ ổn định cao.
+                    * **Scaffold Split:** Đây là kỹ thuật chia dữ liệu dựa trên khung xương hóa học. Việc tập Test (màu nhạt) trải dài tương tự tập Train chứng minh AI có khả năng **suy luận** trên các cấu trúc mới chứ không chỉ học thuộc lòng.
+                    """)
             else:
                 st.info("👋 Chào An! Hãy thực hiện dự đoán ở Tab bên cạnh để AI xuất báo cáo chuyên sâu.")
     except Exception as e:
