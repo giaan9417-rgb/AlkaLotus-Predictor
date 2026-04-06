@@ -6,10 +6,6 @@ import time
 import os
 import plotly.express as px
 from stmol import showmol
-from data import get_database
-from utils import fetch_pdb, render_3d_molecule, check_lipinski, create_admet_radar, classify_potential
-
-
 
 # --- 1. CẤU HÌNH TRANG ---
 st.set_page_config(
@@ -19,6 +15,29 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- 2. ĐỊNH NGHĨA HƯỚNG DẪN SỬ DỤNG (DIALOG) ---
+@st.dialog("📖 HƯỚNG DẪN SỬ DỤNG HỆ THỐNG")
+def show_user_guide():
+    st.markdown("""
+    ### 👋 Chào mừng bạn đến với AlkaLotus Predictor!
+    Hệ thống hỗ trợ sàng lọc ảo các hợp chất Alkaloid từ cây Sen trong điều trị Alzheimer.
+    
+    **Các bước sử dụng chính:**
+    1. **🏠 Thư viện Alkaloid:** Tra cứu dữ liệu cấu trúc hóa học có sẵn.
+    2. **🧬 Mô phỏng Docking 3D:** Quan sát tương tác phân tử trực quan.
+    3. **📊 Phân tích & Xuất báo cáo:** Đánh giá quy tắc Lipinski và tải kết quả.
+    4. **🛡️ AI Predictor (ML):** Dự đoán hoạt tính pIC50 bằng Machine Learning.
+    
+    *Lưu ý: Bạn có thể mở lại hướng dẫn này bất cứ lúc nào tại thanh bên (Sidebar).*
+    """)
+    if st.button("Bắt đầu ngay", use_container_width=True):
+        st.rerun()
+
+# Logic tự động hiện Pop-up lần đầu
+if 'show_guide_first_time' not in st.session_state:
+    st.session_state.show_guide_first_time = True
+
+# --- 3. HIỆU ỨNG INTRO HOA SEN ---
 if 'visited' not in st.session_state:
     intro_placeholder = st.empty()
     with intro_placeholder.container():
@@ -85,7 +104,10 @@ if 'visited' not in st.session_state:
         time.sleep(5)
     intro_placeholder.empty()
     st.session_state['visited'] = True
-
+    # Sau khi intro chạy xong, nếu là lần đầu thì hiện Pop-up hướng dẫn
+    if st.session_state.show_guide_first_time:
+        st.session_state.show_guide_first_time = False
+        show_user_guide()
 
 st.title("🪷 AlkaLotus Predictor")
 
@@ -94,7 +116,6 @@ try:
     from data import get_database
     df = get_database()
 except ImportError:
-    # Backup nếu không tìm thấy file data.py (Dành cho chạy test)
     df = pd.DataFrame({
         'Name': ['Roemerine', 'Nuciferine'],
         'MW': [279.33, 295.38],
@@ -110,20 +131,14 @@ if 'selected_compound' not in st.session_state:
 # --- 5. SIDEBAR ---
 st.sidebar.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
 
-logo_paths = [
-    "AlkaLotus/Logo_HungVuong.png.png", 
-    "Logo_HungVuong.png.png",
-    "AlkaLotus/Logo_HungVuong.png",
-    "Logo_HungVuong.png"
-]
-
+# (Đoạn xử lý Logo giữ nguyên như code của An...)
+logo_paths = ["AlkaLotus/Logo_HungVuong.png.png", "Logo_HungVuong.png.png", "AlkaLotus/Logo_HungVuong.png", "Logo_HungVuong.png"]
 logo_found = False
 for path in logo_paths:
     if os.path.exists(path):
         st.sidebar.image(path, width=130)
         logo_found = True
         break
-
 if not logo_found:
     github_logo_url = "https://raw.githubusercontent.com/giaan9417-rgb/AlkaLotus-Predictor/main/AlkaLotus/Logo_HungVuong.png.png"
     st.sidebar.image(github_logo_url, width=130)
@@ -148,6 +163,12 @@ page = st.sidebar.radio(
     "Danh mục hệ thống",
     ["1. Thư viện Alkaloid", "2. Mô phỏng Docking 3D", "3. Phân tích & Xuất báo cáo", "4. AI Predictor (ML)"]
 )
+
+# NÚT MỞ LẠI HƯỚNG DẪN TRÊN SIDEBAR
+st.sidebar.divider()
+if st.sidebar.button("❓ Mở hướng dẫn sử dụng", use_container_width=True):
+    show_user_guide()
+
 st.sidebar.divider()
 st.sidebar.caption("👨‍ Học sinh: **Quách Gia An & Nguyễn Lê Bách Hợp**")
 st.sidebar.caption("🏫 Đơn vị: **Lớp 10-K30 - THPT Chuyên Hùng Vương**")
