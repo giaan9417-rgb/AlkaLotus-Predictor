@@ -223,7 +223,7 @@ if page == "1. Thư viện Alkaloid":
         
         fig_heat.update_layout(height=350, margin=dict(l=20, r=20, t=20, b=20))
         st.plotly_chart(fig_heat, use_container_width=True)
-        st.info("💡 **Mẹo thuyết trình:** Hãy nhấn mạnh các chất có số âm lớn (màu hồng đậm) vì đó là những ứng viên có tiềm năng ức chế enzyme cao nhất.")
+        st.info("💡 **Các chất có số âm lớn (màu hồng đậm) đó là những ứng viên có tiềm năng ức chế enzyme cao nhất.")
     else:
         st.warning("⚠️ Không có hợp chất nào thỏa mãn bộ lọc hiện tại. Hãy nới lỏng các điều kiện Lipinski.")
 
