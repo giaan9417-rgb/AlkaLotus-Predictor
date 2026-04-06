@@ -152,44 +152,70 @@ st.sidebar.divider()
 st.sidebar.caption("👨‍ Học sinh: **Quách Gia An & Nguyễn Lê Bách Hợp**")
 st.sidebar.caption("🏫 Đơn vị: **Lớp 10-K30 - THPT Chuyên Hùng Vương**")
 
-# --- 6. MODULE 1: DATABASE EXPLORER ---
+# --- 6. MODULE 1: DATABASE EXPLORER (BẢN NÂNG CẤP) ---
 if page == "1. Thư viện Alkaloid":
     st.title("📚 Thư viện số hóa Alkaloid")
     
+    # --- PHẦN HƯỚNG DẪN TỔNG QUAN ---
+    with st.sidebar:
+        st.header("📖 Hướng dẫn Module 1")
+        st.info("""
+        **Mục tiêu:** Tra cứu và sàng lọc các Alkaloid từ Sen dựa trên các tiêu chuẩn hóa dược quốc tế.
+        
+        **Các bước thực hiện:**
+        1. **Lọc dữ liệu:** Sử dụng bộ lọc Lipinski để chọn ra các chất có khả năng làm thuốc cao nhất.
+        2. **Quan sát Heatmap:** Tìm các ô màu hồng đậm - đó là các chất có ái lực liên kết mạnh nhất với Enzyme.
+        3. **Chọn chất:** Chọn 1 hợp chất cụ thể để hệ thống ghi nhớ và phân tích sâu ở Module 2, 3, 4.
+        """)
+
     if 'MW' in df.columns:
         df = df.rename(columns={'MW': 'Molecular Weight'})
     
-    with st.expander("🔍 Bộ lọc sàng lọc thuốc (Lipinski Rule of 5)", expanded=True):
+    # --- HƯỚNG DẪN VỀ QUY TẮC LIPINSKI ---
+    st.subheader("🔍 Bộ lọc sàng lọc thuốc thông minh")
+    with st.expander("❓ Quy tắc Lipinski (Rule of 5) là gì?", expanded=False):
+        st.write("""
+        Đây là quy tắc vàng trong hóa dược để đánh giá một hợp chất có khả năng hấp thụ tốt khi dùng đường uống hay không:
+        - **MW < 500:** Kích thước vừa phải để dễ di chuyển qua màng tế bào.
+        - **LogP < 5:** Độ tan trong dầu phù hợp để thấm qua màng chất béo.
+        - **HBD < 5 & HBA < 10:** Giới hạn liên kết Hydro để phân tử không quá cồng kềnh khi liên kết với nước.
+        """)
+
+    # --- KHU VỰC BỘ LỌC ---
+    with st.container(border=True):
         c1, c2, c3, c4 = st.columns(4)
-        mw_f = c1.checkbox("Molecular Weight < 500", value=True)
-        lp_f = c2.checkbox("LogP < 5", value=True)
+        mw_f = c1.checkbox("MW < 500", value=True, help="Lọc các phân tử nhỏ gọn")
+        lp_f = c2.checkbox("LogP < 5", value=True, help="Lọc các chất có độ tan dầu lý tưởng")
         hbd_f = c3.checkbox("H-Donor < 5", value=True)
         hba_f = c4.checkbox("H-Acceptor < 10", value=True)
     
     filtered_df = df.copy()
     
-    if mw_f: 
-        filtered_df = filtered_df[filtered_df['Molecular Weight'] < 500]
-    if lp_f: 
-        filtered_df = filtered_df[filtered_df['LogP'] < 5]
-    if hbd_f: 
-        filtered_df = filtered_df[filtered_df['HBD'] < 5]
-    if hba_f: 
-        filtered_df = filtered_df[filtered_df['HBA'] < 10]
+    if mw_f: filtered_df = filtered_df[filtered_df['Molecular Weight'] < 500]
+    if lp_f: filtered_df = filtered_df[filtered_df['LogP'] < 5]
+    if hbd_f: filtered_df = filtered_df[filtered_df['HBD'] < 5]
+    if hba_f: filtered_df = filtered_df[filtered_df['HBA'] < 10]
     
     st.dataframe(
         filtered_df[['Name', 'Formula', 'Molecular Weight', 'LogP', 'HBD', 'HBA']], 
-        use_container_width=True
+        use_container_width=True,
+        column_config={
+            "Name": "Tên hợp chất",
+            "Formula": "Công thức",
+            "Molecular Weight": st.column_config.NumberColumn("MW", format="%.2f g/mol")
+        }
     )
 
     # --- TÍNH NĂNG 1: HEATMAP PHÂN TÍCH TỔNG QUAN ---
-    st.markdown("### 🌡️ Phân tích Ái lực liên kết Tổng quát")
+    st.markdown("### 🌡️ Phân tích Ái lực liên kết (Binding Affinity)")
+    st.caption("🔍 **Hướng dẫn:** Biểu đồ này so sánh khả năng ức chế của các chất lên 2 đích đến Alzheimer (AChE và BACE1).")
+    
     if not filtered_df.empty:
         heatmap_data = filtered_df[['Name', 'dG_BACE1', 'dG_AChE']].set_index('Name')
         
         fig_heat = px.imshow(
             heatmap_data.T, 
-            labels=dict(x="HỢP CHẤT", y="ENZYME MỤC TIÊU", color="ΔG (kcal/mol)"),
+            labels=dict(x="HỢP CHẤT", y="MỤC TIÊU", color="ΔG (kcal/mol)"),
             color_continuous_scale='RdPu_r', 
             text_auto=True, 
             aspect="auto"
@@ -197,22 +223,26 @@ if page == "1. Thư viện Alkaloid":
         
         fig_heat.update_layout(height=350, margin=dict(l=20, r=20, t=20, b=20))
         st.plotly_chart(fig_heat, use_container_width=True)
-        st.caption("💡 *Ghi chú: Màu càng hồng đậm (giá trị âm càng lớn) thể hiện ái lực liên kết càng mạnh.*")
+        st.info("💡 **Mẹo thuyết trình:** Hãy nhấn mạnh các chất có số âm lớn (màu hồng đậm) vì đó là những ứng viên có tiềm năng ức chế enzyme cao nhất.")
     else:
-        st.warning("Không có hợp chất nào thỏa mãn bộ lọc hiện tại.")
+        st.warning("⚠️ Không có hợp chất nào thỏa mãn bộ lọc hiện tại. Hãy nới lỏng các điều kiện Lipinski.")
 
     st.divider()
 
-    # CHỌN HỢP CHẤT (Đồng bộ với Session State)
+    # --- CHỌN HỢP CHẤT MỤC TIÊU ---
+    st.subheader("🎯 Chọn đối tượng nghiên cứu")
     compounds = df['Name'].tolist()
     current_idx = compounds.index(st.session_state.selected_compound) if st.session_state.selected_compound in compounds else 0
     
-    choice = st.selectbox("🎯 Chọn hợp chất mục tiêu để phân tích sâu ở các Module sau:", 
+    choice = st.selectbox("Chọn hợp chất để chuyển tiếp dữ liệu sang Module 3D và AI:", 
                           compounds, index=current_idx)
     
     if choice != st.session_state.selected_compound:
         st.session_state.selected_compound = choice
-        st.rerun()
+        st.success(f"Đã chọn **{choice}**. Dữ liệu đã sẵn sàng ở các Module sau!")
+        if st.button("Đi đến Module 3D ➔"):
+            # Chuyển trang (Logic này tùy thuộc vào cách An cài đặt điều hướng)
+            pass
 # --- MODULE 2: VIRTUAL DOCKING LAB (DỮ LIỆU CHÍNH THỨC TỪ BÁO CÁO 2026) ---
 elif page == "2. Mô phỏng Docking 3D":
     st.title("🔬 Virtual Docking Lab (In Silico)")
