@@ -567,7 +567,7 @@ elif page == "4. AI Predictor (ML)":
                             st.error("🧪 CHƯA ĐẠT TIÊU CHÍ")
 
         with tab_expert:
-        if st.session_state.last_preds_dual is not None:
+         if st.session_state.last_preds_dual is not None:
             # 1. BIỂU ĐỒ SHAP WATERFALL (Giữ nguyên)
             st.subheader("🧬 Giải thích cục bộ (SHAP Waterfall Sim)")
             # ... (Code vẽ fig_waterfall giữ nguyên) ...
